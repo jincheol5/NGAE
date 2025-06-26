@@ -3,6 +3,7 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+from torch_geometric.utils import from_networkx
 
 class GraphUtils:
     class GraphManager:
@@ -15,6 +16,24 @@ class GraphUtils:
         def set_edge_weight_attr(graph: nx.Graph):
             for edge in graph.edges():
                 graph.edges[edge]['weight']=np.float32(random.uniform(0.2,1.0))
+
+        @staticmethod
+        def initialize_node_attr_for_BFS(graph: nx.Graph,source_id: int=0):
+            for node in graph.nodes():
+                if node==source_id:
+                    graph.nodes[node]['bfs']=1.0
+                else:
+                    graph.nodes[node]['bfs']=0.0
+
+        @staticmethod
+        def initialize_node_attr_for_BF(graph: nx.Graph,source_id: int=0):
+            longest_shortest_path_len=float(graph.number_of_nodes())
+            for node in graph.nodes():
+                if node==source_id:
+                    graph.nodes[node]['bf']=0.0
+                else:
+                    graph.nodes[node]['bf']=longest_shortest_path_len+1.0
+                graph.nodes[node]['p']=node
 
     class GraphGenerator:
         @staticmethod
@@ -151,3 +170,48 @@ class GraphUtils:
             plt.axis('off')
             plt.tight_layout()
             plt.show()
+    
+    class GraphAlgorithm:
+        @staticmethod
+        def compute_BFS_step(graph: nx.Graph,source_id: int=0,init: bool=False,Q: set=None):
+            Q_next=set()
+            if init:
+                GraphUtils.GraphManager.initialize_node_attr_for_BFS(graph=graph,source_id=source_id)
+                Q_next.add(source_id)
+            else:
+                for src in Q:
+                    for u,v in graph.edges(src):
+                        tar=v if u==src else u
+                        if graph.nodes[tar]['bfs']==0.0:
+                            graph.nodes[tar]['bfs']=1.0
+                            Q_next.add(tar)
+            return Q_next
+
+        @staticmethod
+        def compute_BF_step(graph: nx.Graph,source_id: int=0,init: bool=False,Q: set=None):
+            Q_next=set()
+            if init:
+                GraphUtils.GraphManager.initialize_node_attr_for_BF(graph=graph,source_id=source_id)
+                Q_next.add(source_id)
+            else:
+                pre_bf={n: graph.nodes[n]['bf'] for node in Q for n in {node,*graph.neighbors(node)}}
+                for src in Q:
+                    for u,v in graph.edges(src):
+                        tar=v if u==src else u 
+                        if pre_bf[src]+graph.edges[(src,tar)]['w']<pre_bf[tar]:
+                            graph.nodes[tar]['bf']=pre_bf[src]+graph.edges[(src,tar)]['w']
+                            graph.nodes[tar]['p']=src
+                            Q_next.add(tar)
+            return Q_next
+
+        @staticmethod
+        def compute_BFS(graph: nx.Graph,source_id: int=0):
+            Q=GraphUtils.GraphAlgorithm.compute_BFS_step(graph=graph,source_id=source_id,init=True)
+            while Q:
+                Q=GraphUtils.GraphAlgorithm.compute_BFS_step(graph=graph,source_id=source_id,Q=Q)
+
+        @staticmethod
+        def compute_BF(graph: nx.Graph,source_id: int=0):
+            Q=GraphUtils.GraphAlgorithm.compute_BF_step(graph=graph,source_id=source_id,init=True)
+            while Q:
+                Q=GraphUtils.GraphAlgorithm.compute_BF_step(graph=graph,source_id=source_id,Q=Q)
