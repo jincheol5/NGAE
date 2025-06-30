@@ -15,7 +15,12 @@ class GraphUtils:
         @staticmethod
         def set_edge_weight_attr(graph: nx.Graph):
             for edge in graph.edges():
-                graph.edges[edge]['weight']=np.float32(random.uniform(0.2,1.0))
+                graph.edges[edge]['w']=np.float32(random.uniform(0.2,1.0))
+                
+        @staticmethod
+        def set_edge_weight_attr_to_one(graph: nx.Graph):
+            for edge in graph.edges():
+                graph.edges[edge]['w']=np.float32(1.0)
 
         @staticmethod
         def initialize_node_attr_for_BFS(graph: nx.Graph,source_id: int=0):
@@ -34,6 +39,13 @@ class GraphUtils:
                 else:
                     graph.nodes[node]['bf']=longest_shortest_path_len+1.0
                 graph.nodes[node]['p']=node
+        
+        @staticmethod
+        def remap_node_predecessor_attr_to_sorted_index(graph: nx.Graph):
+            for node in graph.nodes():
+                pred=graph.nodes[node].get('p')
+                neigh_sorted=sorted(graph.neighbors(node))
+                graph.nodes[node]['p']=neigh_sorted.index(pred)
 
     class GraphGenerator:
         @staticmethod

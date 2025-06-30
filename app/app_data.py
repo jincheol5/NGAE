@@ -3,6 +3,8 @@ from ngae import GraphUtils,DataUtils
 
 def app_data(app_number=1):
     match app_number:
+        case 0:
+            print(f"Input application number")
         case 1:
             """
             App 1. 
@@ -36,6 +38,6 @@ def app_data(app_number=1):
 Execute app_data
 """
 parser=argparse.ArgumentParser()
-parser.add_argument("--app",type=int,default=1)
+parser.add_argument("--app",type=int,default=0)
 args=parser.parse_args()
 app_data(app_number=args.app)
