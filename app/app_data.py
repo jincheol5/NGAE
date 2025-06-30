@@ -1,7 +1,7 @@
 import argparse
 from ngae import GraphUtils,DataUtils
 
-def app_data(app_number=1):
+def app_data(app_number: int):
     match app_number:
         case 0:
             print(f"Input application number")

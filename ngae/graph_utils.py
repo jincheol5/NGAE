@@ -16,14 +16,9 @@ class GraphUtils:
         def set_edge_weight_attr(graph: nx.Graph):
             for edge in graph.edges():
                 graph.edges[edge]['w']=np.float32(random.uniform(0.2,1.0))
-                
-        @staticmethod
-        def set_edge_weight_attr_to_one(graph: nx.Graph):
-            for edge in graph.edges():
-                graph.edges[edge]['w']=np.float32(1.0)
 
         @staticmethod
-        def initialize_node_attr_for_BFS(graph: nx.Graph,source_id: int=0):
+        def initialize_node_attr_for_BFS(graph: nx.DiGraph,source_id: int=0):
             for node in graph.nodes():
                 if node==source_id:
                     graph.nodes[node]['bfs']=1.0
@@ -31,7 +26,7 @@ class GraphUtils:
                     graph.nodes[node]['bfs']=0.0
 
         @staticmethod
-        def initialize_node_attr_for_BF(graph: nx.Graph,source_id: int=0):
+        def initialize_node_attr_for_BF(graph: nx.DiGraph,source_id: int=0):
             longest_shortest_path_len=float(graph.number_of_nodes())
             for node in graph.nodes():
                 if node==source_id:
@@ -41,11 +36,11 @@ class GraphUtils:
                 graph.nodes[node]['p']=node
         
         @staticmethod
-        def remap_node_predecessor_attr_to_sorted_index(graph: nx.Graph):
+        def remap_node_predecessor_attr_to_sorted_index(graph: nx.DiGraph):
             for node in graph.nodes():
-                pred=graph.nodes[node].get('p')
-                neigh_sorted=sorted(graph.neighbors(node))
-                graph.nodes[node]['p']=neigh_sorted.index(pred)
+                pred=graph.nodes[node]['p']
+                neighbor_sorted=sorted(graph.predecessors(node))
+                graph.nodes[node]['p']=neighbor_sorted.index(pred)
 
     class GraphGenerator:
         @staticmethod
@@ -77,7 +72,9 @@ class GraphUtils:
                 if num_nodes%2!=0:
                     raise ValueError("ladder graph requires an even number of nodes.")
                 ladder_graph=nx.ladder_graph(num_nodes//2)
-                ladder_graph_list.append(ladder_graph)
+                GraphUtils.GraphManager.set_self_loop(graph=ladder_graph)
+                GraphUtils.GraphManager.set_edge_weight_attr(graph=ladder_graph)
+                ladder_graph_list.append(ladder_graph.to_directed())
 
                 """
                 2. generate 2D grid graph
@@ -86,20 +83,26 @@ class GraphUtils:
                 grid_graph=nx.grid_2d_graph(side_length,side_length)
                 grid_graph=nx.convert_node_labels_to_integers(grid_graph)
                 grid_graph=grid_graph.subgraph(range(num_nodes)).copy()
-                grid_graph_list.append(grid_graph)
+                GraphUtils.GraphManager.set_self_loop(graph=grid_graph)
+                GraphUtils.GraphManager.set_edge_weight_attr(graph=grid_graph)
+                grid_graph_list.append(grid_graph.to_directed())
                 
                 """
                 3. generate tree graph
                 """
                 tree_graph=nx.random_tree(num_nodes)
-                tree_graph_list.append(tree_graph)
+                GraphUtils.GraphManager.set_self_loop(graph=tree_graph)
+                GraphUtils.GraphManager.set_edge_weight_attr(graph=tree_graph)
+                tree_graph_list.append(tree_graph.to_directed())
 
                 """
                 4. generate Erdos-Renyi graph
                 """
                 p=min(np.log2(num_nodes)/num_nodes,0.5)
                 erdos_renyi_graph=nx.erdos_renyi_graph(num_nodes,p)
-                Erdos_Renyi_graph_list.append(erdos_renyi_graph)
+                GraphUtils.GraphManager.set_self_loop(graph=erdos_renyi_graph)
+                GraphUtils.GraphManager.set_edge_weight_attr(graph=erdos_renyi_graph)
+                Erdos_Renyi_graph_list.append(erdos_renyi_graph.to_directed())
 
                 """
                 5. generate Barabasi-Albert graph
@@ -108,7 +111,9 @@ class GraphUtils:
                     raise ValueError("barabasi_albert graph requires more than 4 number of nodes.")
                 m=random.choice([4,5])
                 barabasi_albert_graph=nx.barabasi_albert_graph(num_nodes,m)
-                Barabasi_Albert_graph_list.append(barabasi_albert_graph)
+                GraphUtils.GraphManager.set_self_loop(graph=barabasi_albert_graph)
+                GraphUtils.GraphManager.set_edge_weight_attr(graph=barabasi_albert_graph)
+                Barabasi_Albert_graph_list.append(barabasi_albert_graph.to_directed())
                 
                 """
                 6. generate 4 community graph
@@ -127,7 +132,9 @@ class GraphUtils:
                         if (i//community_size)!=(j//community_size):
                             if random.random()<0.01:
                                 community_graph.add_edge(i,j)
-                community_graph_list.append(community_graph)
+                GraphUtils.GraphManager.set_self_loop(graph=community_graph)
+                GraphUtils.GraphManager.set_edge_weight_attr(graph=community_graph)
+                community_graph_list.append(community_graph.to_directed())
             
                 """
                 7. generate 4-caveman graph
@@ -146,16 +153,10 @@ class GraphUtils:
                     u,v=random.sample(list(caveman_graph.nodes()),2)
                     if not caveman_graph.has_edge(u,v):
                         caveman_graph.add_edge(u,v)
-                caveman_graph_list.append(caveman_graph)
-        
-            """
-            set self-loop, edge w attr
-            """
-            for graph_list in [ladder_graph_list,grid_graph_list,tree_graph_list,Erdos_Renyi_graph_list,Barabasi_Albert_graph_list,community_graph_list,caveman_graph_list]:
-                for graph in graph_list:
-                    GraphUtils.GraphManager.set_self_loop(graph=graph)
-                    GraphUtils.GraphManager.set_edge_weight_attr(graph=graph)
-            
+                GraphUtils.GraphManager.set_self_loop(graph=caveman_graph)
+                GraphUtils.GraphManager.set_edge_weight_attr(graph=caveman_graph)
+                caveman_graph_list.append(caveman_graph.to_directed())
+
             graph_list_dict={}
             graph_list_dict['ladder']=ladder_graph_list
             graph_list_dict['grid']=grid_graph_list
@@ -169,14 +170,14 @@ class GraphUtils:
 
     class GraphVisualizer:
         @staticmethod
-        def visualize_graph(graph: nx.Graph):
+        def visualize_graph(graph: nx.DiGraph):
             # layout 계산
             pos=nx.kamada_kawai_layout(graph)
 
             # node, edge 그리기
             plt.figure(figsize=(10,10))
             nx.draw_networkx_nodes(graph,pos,node_size=100,node_color='lightgreen',edgecolors='black')
-            nx.draw_networkx_edges(graph,pos,width=2,edge_color='gray')
+            nx.draw_networkx_edges(graph,pos,width=2,edge_color='gray',arrows=True,arrowsize=20)
 
             # 축 제거 및 출력
             plt.axis('off')
@@ -185,45 +186,30 @@ class GraphUtils:
     
     class GraphAlgorithm:
         @staticmethod
-        def compute_BFS_step(graph: nx.Graph,source_id: int=0,init: bool=False,Q: set=None):
+        def compute_BFS_step(graph: nx.DiGraph,source_id: int=0,init: bool=False,Q: set=None):
             Q_next=set()
             if init:
                 GraphUtils.GraphManager.initialize_node_attr_for_BFS(graph=graph,source_id=source_id)
                 Q_next.add(source_id)
             else:
                 for src in Q:
-                    for u,v in graph.edges(src):
-                        tar=v if u==src else u
-                        if graph.nodes[tar]['bfs']==0.0:
-                            graph.nodes[tar]['bfs']=1.0
+                    for _,tar in graph.edges(src):
+                        if graph.nodes[tar]['bfs'] == 0.0:
+                            graph.nodes[tar]['bfs'] = 1.0
                             Q_next.add(tar)
             return Q_next
 
         @staticmethod
-        def compute_BF_step(graph: nx.Graph,source_id: int=0,init: bool=False,Q: set=None):
+        def compute_BF_step(graph: nx.DiGraph,source_id: int=0,init: bool=False,Q: set=None):
             Q_next=set()
             if init:
                 GraphUtils.GraphManager.initialize_node_attr_for_BF(graph=graph,source_id=source_id)
                 Q_next.add(source_id)
             else:
-                pre_bf={n: graph.nodes[n]['bf'] for node in Q for n in {node,*graph.neighbors(node)}}
                 for src in Q:
-                    for u,v in graph.edges(src):
-                        tar=v if u==src else u 
-                        if pre_bf[src]+graph.edges[(src,tar)]['w']<pre_bf[tar]:
-                            graph.nodes[tar]['bf']=pre_bf[src]+graph.edges[(src,tar)]['w']
+                    for _,tar in graph.edges(src):
+                        if graph.nodes[src]['bf']+graph.edges[(src,tar)]['w']<graph.nodes[tar]['bf']:
+                            graph.nodes[tar]['bf']=graph.nodes[src]['bf']+graph.edges[(src,tar)]['w']
                             graph.nodes[tar]['p']=src
                             Q_next.add(tar)
             return Q_next
-
-        @staticmethod
-        def compute_BFS(graph: nx.Graph,source_id: int=0):
-            Q=GraphUtils.GraphAlgorithm.compute_BFS_step(graph=graph,source_id=source_id,init=True)
-            while Q:
-                Q=GraphUtils.GraphAlgorithm.compute_BFS_step(graph=graph,source_id=source_id,Q=Q)
-
-        @staticmethod
-        def compute_BF(graph: nx.Graph,source_id: int=0):
-            Q=GraphUtils.GraphAlgorithm.compute_BF_step(graph=graph,source_id=source_id,init=True)
-            while Q:
-                Q=GraphUtils.GraphAlgorithm.compute_BF_step(graph=graph,source_id=source_id,Q=Q)
