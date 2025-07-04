@@ -34,13 +34,14 @@ class GraphUtils:
                 else:
                     graph.nodes[node]['bf']=longest_shortest_path_len+1.0
                 graph.nodes[node]['p']=node
+                graph.nodes[node]['p_idx']=0
         
         @staticmethod
         def remap_node_predecessor_attr_to_sorted_index(graph: nx.DiGraph):
             for node in graph.nodes():
                 pred=graph.nodes[node]['p']
                 neighbor_sorted=sorted(graph.predecessors(node))
-                graph.nodes[node]['p']=neighbor_sorted.index(pred)
+                graph.nodes[node]['p_idx']=neighbor_sorted.index(pred)
 
     class GraphGenerator:
         @staticmethod
@@ -194,8 +195,8 @@ class GraphUtils:
             else:
                 for src in Q:
                     for _,tar in graph.edges(src):
-                        if graph.nodes[tar]['bfs'] == 0.0:
-                            graph.nodes[tar]['bfs'] = 1.0
+                        if graph.nodes[tar]['bfs']==0.0:
+                            graph.nodes[tar]['bfs']=1.0
                             Q_next.add(tar)
             return Q_next
 

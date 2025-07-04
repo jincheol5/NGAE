@@ -1,9 +1,10 @@
 import argparse
 import networkx as nx
+import numpy as np
 from ngae import GraphUtils
 
-def test(test_number: int):
-    match test_number:
+def test(config: dict):
+    match config["test_num"]:
         case 0:
             pass
         case 1:
@@ -15,20 +16,20 @@ def test(test_number: int):
             graph.add_edge(0,2,w=1)
             graph.add_edge(1,3,w=2)
             graph.add_edge(2,3,w=3)
-            graph.add_edge(0,3,w=3.5)
-            graph.add_edge(3,4,w=1.5)
+            graph.add_edge(0,3,w=4.5)
+            graph.add_edge(3,4,w=0.5)
 
+            bfs=np.empty((0,5))
             Q=GraphUtils.GraphAlgorithm.compute_BFS_step(graph=graph,source_id=0,init=True)
-            print(f"Q: {Q}")
-            for node in graph.nodes():
-                print(f"{node} bfs: {graph.nodes[node]['bfs']}")
-            print()
+            bfs_step=np.array([graph.nodes[node]['bfs'] for node in sorted(graph.nodes())]).reshape(1,-1)
+            bfs=np.append(bfs,bfs_step,axis=0)
             while Q:
                 Q=GraphUtils.GraphAlgorithm.compute_BFS_step(graph=graph,source_id=0,Q=Q)
-                print(f"Q: {Q}")
-                for node in graph.nodes():
-                    print(f"{node} bfs: {graph.nodes[node]['bfs']}")
-                print()
+                bfs_step=np.array([graph.nodes[node]['bfs'] for node in sorted(graph.nodes())]).reshape(1,-1)
+                bfs=np.append(bfs,bfs_step,axis=0)
+            print(f"BFS Reachability:")
+            for bfs_step in bfs.T:
+                print(*bfs_step)
 
         case 2:
             """
@@ -39,20 +40,29 @@ def test(test_number: int):
             graph.add_edge(0,2,w=1)
             graph.add_edge(1,3,w=2)
             graph.add_edge(2,3,w=3)
-            graph.add_edge(0,3,w=3.5)
-            graph.add_edge(3,4,w=1.5)
+            graph.add_edge(0,3,w=4.5)
+            graph.add_edge(3,4,w=0.5)
 
+            bf=np.empty((0,5))
+            p=np.empty((0,5))
             Q=GraphUtils.GraphAlgorithm.compute_BF_step(graph=graph,source_id=0,init=True)
-            print(f"Q: {Q}")
-            for node in graph.nodes():
-                print(f"{node} p: {graph.nodes[node]['p']} bf: {graph.nodes[node]['bf']}")
-            print()
+            bf_step=np.array([graph.nodes[node]['bf'] for node in sorted(graph.nodes())]).reshape(1,-1)
+            bf=np.append(bf,bf_step,axis=0)
+            p_step=np.array([graph.nodes[node]['p'] for node in sorted(graph.nodes())]).reshape(1,-1)
+            p=np.append(p,p_step,axis=0)
             while Q:
                 Q=GraphUtils.GraphAlgorithm.compute_BF_step(graph=graph,source_id=0,Q=Q)
-                print(f"Q: {Q}")
-                for node in graph.nodes():
-                    print(f"{node} p: {graph.nodes[node]['p']} bf: {graph.nodes[node]['bf']}")
-                print()
+                bf_step=np.array([graph.nodes[node]['bf'] for node in sorted(graph.nodes())]).reshape(1,-1)
+                bf=np.append(bf,bf_step,axis=0)
+                p_step=np.array([graph.nodes[node]['p'] for node in sorted(graph.nodes())]).reshape(1,-1)
+                p=np.append(p,p_step,axis=0)
+            print(f"Bellman-Ford Distance:")
+            for step in bf.T:
+                print(*step)
+            print()
+            print(f"Bellman-Ford Predecessor:")
+            for step in p.T:
+                print(*step)
 
         case 3:
             """
@@ -63,30 +73,47 @@ def test(test_number: int):
             graph.add_edge(0,2,w=1)
             graph.add_edge(1,3,w=2)
             graph.add_edge(2,3,w=3)
-            graph.add_edge(0,3,w=3.5)
-            graph.add_edge(3,4,w=1.5)
+            graph.add_edge(0,3,w=4.5)
+            graph.add_edge(3,4,w=0.5)
 
-            graph.add_edge(0,0,w=10)
-            graph.add_edge(1,1,w=10)
-            graph.add_edge(2,2,w=10)
-            graph.add_edge(3,3,w=10)
-            graph.add_edge(4,4,w=10)
+            graph.add_edge(0,0,w=6)
+            graph.add_edge(1,1,w=6)
+            graph.add_edge(2,2,w=6)
+            graph.add_edge(3,3,w=6)
+            graph.add_edge(4,4,w=6)
 
+            p=np.empty((0,5))
+            p_idx=np.empty((0,5))
             Q=GraphUtils.GraphAlgorithm.compute_BF_step(graph=graph,source_id=0,init=True)
+            p_step=np.array([graph.nodes[node]['p'] for node in sorted(graph.nodes())]).reshape(1,-1)
+            p=np.append(p,p_step,axis=0)
+            p_idx_step=np.array([graph.nodes[node]['p_idx'] for node in sorted(graph.nodes())]).reshape(1,-1)
+            p_idx=np.append(p_idx,p_idx_step,axis=0)
             while Q:
                 Q=GraphUtils.GraphAlgorithm.compute_BF_step(graph=graph,source_id=0,Q=Q)
-            for node in graph.nodes():
-                print(f"{node} p: {graph.nodes[node]['p']} bf: {graph.nodes[node]['bf']}")
+                p_step=np.array([graph.nodes[node]['p'] for node in sorted(graph.nodes())]).reshape(1,-1)
+                p=np.append(p,p_step,axis=0)
+                GraphUtils.GraphManager.remap_node_predecessor_attr_to_sorted_index(graph=graph)
+                p_idx_step=np.array([graph.nodes[node]['p_idx'] for node in sorted(graph.nodes())]).reshape(1,-1)
+                p_idx=np.append(p_idx,p_idx_step,axis=0)
+            print(f"Bellman-Ford Predecessor:")
+            for step in p.T:
+                print(*step)
             print()
-            GraphUtils.GraphManager.remap_node_predecessor_attr_to_sorted_index(graph=graph)
-            for node in graph.nodes():
-                print(f"{node} p: {graph.nodes[node]['p']} bf: {graph.nodes[node]['bf']}")
+            print(f"Bellman-Ford Predecessor index:")
+            for step in p_idx.T:
+                print(*step)
 
 
 """
 Execute Test
 """
 parser=argparse.ArgumentParser()
-parser.add_argument("--test",type=int,default=0)
+parser.add_argument("--test_num",type=int,default=0)
 args=parser.parse_args()
-test(test_number=args.test)
+
+config={
+    "test_num":args.test_num
+}
+
+test(config=config)

@@ -1,8 +1,8 @@
 import argparse
 from ngae import GraphUtils,DataUtils
 
-def app_data(app_number: int):
-    match app_number:
+def app_data(config: dict):
+    match config["app_num"]:
         case 0:
             print(f"Input application number")
         case 1:
@@ -11,16 +11,16 @@ def app_data(app_number: int):
             Generate train, val, test graph list dictionary and save using pickle.
             data info:
                 train:
-                    graph num of each type: 100 
-                    node num: 20
+                    num_graphs (each type): 100 
+                    num_nodes: 20
 
                 val:
-                    graph num of each type: 3 
-                    node num: 20
+                    num_graphs (each type): 3 
+                    num_nodes: 20
 
                 test:
-                    graph num of each type: 5 
-                    node num: 50, 100, 1000
+                    num_graphs (each type): 5 
+                    num_nodes: 50, 100, 1000
             """
             train_20_nodes=GraphUtils.GraphGenerator.generate_7_type_graphs(num_graphs=100,num_nodes=20)
             val_20_nodes=GraphUtils.GraphGenerator.generate_7_type_graphs(num_graphs=5,num_nodes=20)
@@ -33,11 +33,35 @@ def app_data(app_number: int):
             DataUtils.DataLoader.save_to_pickle(data=test_20_nodes,file_name="test_20_nodes",dir_type="graph")
             DataUtils.DataLoader.save_to_pickle(data=test_50_nodes,file_name="test_50_nodes",dir_type="graph")
             DataUtils.DataLoader.save_to_pickle(data=test_100_nodes,file_name="test_100_nodes",dir_type="graph")
+        
+        case 2:
+            """
+            App 2.
+            Visualize graph
+            """
+            file_name=f"{config["task"]}_{config["num_nodes"]}_nodes"
+            graph_list_dict=DataUtils.DataLoader.load_from_pickle(file_name=file_name,dir_type="graph")
+            graph=graph_list_dict[config["graph_type"]][config["graph_num"]]
+            GraphUtils.GraphVisualizer.visualize_graph(graph=graph)
+
 
 """
 Execute app_data
 """
 parser=argparse.ArgumentParser()
-parser.add_argument("--app",type=int,default=0)
+parser.add_argument("--app_num",type=int,default=0)
+parser.add_argument("--task",type=str,default="train")
+parser.add_argument("--graph_type",type=str,default="ladder")
+parser.add_argument("--graph_num",type=int,default=0)
+parser.add_argument("--num_nodes",type=int,default=20)
 args=parser.parse_args()
-app_data(app_number=args.app)
+
+config={
+    "app_num":args.app_num,
+    "task":args.task,
+    "graph_type":args.graph_type,
+    "graph_num":args.graph_num,
+    "num_nodes":args.num_nodes
+}
+
+app_data(config=config)
