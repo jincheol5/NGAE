@@ -2,8 +2,9 @@ import networkx as nx
 import numpy as np
 import random
 import matplotlib.pyplot as plt
+import torch
 from tqdm import tqdm
-from torch_geometric.utils import from_networkx
+from torch_geometric.utils import sort_edge_index
 
 class GraphUtils:
     class GraphManager:
@@ -35,7 +36,37 @@ class GraphUtils:
                     graph.nodes[node]['bf']=longest_shortest_path_len+1.0
                 graph.nodes[node]['p']=node
                 graph.nodes[node]['p_idx']=0
-        
+
+        @staticmethod
+        def get_node_attr_tensor(graph: nx.DiGraph,attr: str='x'):
+            match attr:
+                case 'x':
+                    group_attrs=['bfs','bf']
+                    attr_dict={key: np.array([graph.nodes[node_id][key] for node_id in range(graph.number_of_nodes())],dtype=np.float32) for key in group_attrs}
+                    attr_tensor=torch.tensor(np.column_stack([attr_dict[key] for key in group_attrs]),dtype=torch.float32)
+                case 'bfs'|'bf':
+                    attr_array=np.array([graph.nodes[node_id][attr] for node_id in range(graph.number_of_nodes())],dtype=np.float32)
+                    attr_tensor=torch.tensor(attr_array,dtype=torch.float32)
+                    attr_tensor=attr_tensor.unsqueeze(-1)
+                case 'p'|'p_idx':
+                    attr_array=np.array([graph.nodes[node_id][attr] for node_id in range(graph.number_of_nodes())],dtype=np.int64)
+                    attr_tensor=torch.tensor(attr_array,dtype=torch.int64)
+                    attr_tensor=attr_tensor.unsqueeze(-1)
+            return attr_tensor
+
+        @staticmethod
+        def get_sorted_edge_index_tensor(graph: nx.DiGraph):
+            edge_list=list(graph.edges()) 
+            edge_index=torch.tensor(edge_list,dtype=torch.long).t().contiguous()
+            sorted_edge_index=sort_edge_index(edge_index=edge_index,sort_by_row=False)
+            return sorted_edge_index
+
+        @staticmethod
+        def get_edge_w_tensor(graph: nx.DiGraph,edge_index: torch.Tensor):
+            edge_w=[graph[u.item()][v.item()]['w'] for u,v in zip(edge_index[0],edge_index[1])]
+            edge_w=torch.tensor(edge_w)
+            return edge_w.unsqueeze(-1)
+
         @staticmethod
         def remap_node_predecessor_attr_to_sorted_index(graph: nx.DiGraph):
             for node in graph.nodes():

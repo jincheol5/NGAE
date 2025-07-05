@@ -6,6 +6,8 @@ import networkx as nx
 import torch
 from tqdm import tqdm
 from typing_extensions import Literal
+from graph_utils import GraphUtils
+from torch_geometric.utils import from_networkx,sort_edge_index
 
 class DataUtils:
     class DataLoader:
@@ -28,4 +30,10 @@ class DataUtils:
             return data
     
     class DataProcessor:
-        pass
+        @staticmethod
+        def algo_trajectory_to_PyG_Data(graph: nx.DiGraph,graph_type: str="basic",graph_num: int=0,source_id: int=0):
+            """
+            initialize
+            """
+            GraphUtils.GraphManager.initialize_node_attr_for_BFS(graph=graph,source_id=source_id)
+            GraphUtils.GraphManager.initialize_node_attr_for_BF(graph=graph,source_id=source_id)
