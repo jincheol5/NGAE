@@ -12,30 +12,55 @@ graph.add_edge(2,3,w=3)
 graph.add_edge(0,3,w=4.5)
 graph.add_edge(3,4,w=0.5)
 
-GraphUtils.GraphManager.initialize_node_attr_for_BFS(graph=graph,source_id=0)
-GraphUtils.GraphManager.initialize_node_attr_for_BF(graph=graph,source_id=0)
+graph.add_edge(0,0,w=6)
+graph.add_edge(1,1,w=6)
+graph.add_edge(2,2,w=6)
+graph.add_edge(3,3,w=6)
+graph.add_edge(4,4,w=6)
 
-bfs_tensor=GraphUtils.GraphManager.get_node_attr_tensor(graph=graph,attr='bfs')
-print(f"BFS tensor:")
-print(bfs_tensor)
-print()
+source_id=0
 
-bf_tensor=GraphUtils.GraphManager.get_node_attr_tensor(graph=graph,attr='bf')
-print(f"BF tensor:")
-print(bf_tensor)
-print()
+bfs_Q=GraphUtils.GraphAlgorithm.compute_BFS_step(graph=graph,source_id=source_id,init=True)
+bfs_trajectory_tensor_list=[]
+bfs_trajectory_tensor_list.append(GraphUtils.GraphManager.get_node_attr_tensor(graph=graph,attr='bfs'))
 
-x_tensor=GraphUtils.GraphManager.get_node_attr_tensor(graph=graph,attr='x')
-print(f"x tensor:")
-print(x_tensor)
-print()
+bf_Q=GraphUtils.GraphAlgorithm.compute_BF_step(graph=graph,source_id=source_id,init=True)
+bf_trajectory_tensor_list=[]
+p_trajectory_tensor_list=[]
+p_idx_trajectory_tensor_list=[]
+bf_trajectory_tensor_list.append(GraphUtils.GraphManager.get_node_attr_tensor(graph=graph,attr='bf'))
+p_trajectory_tensor_list.append(GraphUtils.GraphManager.get_node_attr_tensor(graph=graph,attr='p'))
+p_idx_trajectory_tensor_list.append(GraphUtils.GraphManager.get_node_attr_tensor(graph=graph,attr='p_idx'))
 
-p_tensor=GraphUtils.GraphManager.get_node_attr_tensor(graph=graph,attr='p')
-print(f"p tensor:")
-print(p_tensor)
-print()
+"""
+compute BFS, Bellman-Ford trajectory: [seq_len,num_nodes,1]
+"""
+while(True):
+    if not bfs_Q and not bf_Q:
+        break
+    if bfs_Q:
+        bfs_Q=GraphUtils.GraphAlgorithm.compute_BFS_step(graph=graph,source_id=source_id,Q=bfs_Q)
+        bfs_trajectory_tensor_list.append(GraphUtils.GraphManager.get_node_attr_tensor(graph=graph,attr='bfs'))
+    if bf_Q:
+        bf_Q=GraphUtils.GraphAlgorithm.compute_BF_step(graph=graph,source_id=source_id,Q=bf_Q)
+        bf_trajectory_tensor_list.append(GraphUtils.GraphManager.get_node_attr_tensor(graph=graph,attr='bf'))
+        p_trajectory_tensor_list.append(GraphUtils.GraphManager.get_node_attr_tensor(graph=graph,attr='p'))
+        GraphUtils.GraphManager.remap_node_predecessor_to_sorted_index(graph=graph)
+        p_idx_trajectory_tensor_list.append(GraphUtils.GraphManager.get_node_attr_tensor(graph=graph,attr='p_idx'))
 
-p_idx_tensor=GraphUtils.GraphManager.get_node_attr_tensor(graph=graph,attr='p_idx')
-print(f"p_idx tensor:")
-print(p_idx_tensor)
-print()
+bfs_trajectory=torch.stack(bfs_trajectory_tensor_list,dim=0)
+bf_trajectory=torch.stack(bf_trajectory_tensor_list,dim=0)
+p_trajectory=torch.stack(p_trajectory_tensor_list,dim=0)
+p_idx_trajectory=torch.stack(p_idx_trajectory_tensor_list,dim=0)
+
+"""
+compute tau: [seq_len,1]
+"""
+bfs_tau=torch.cat([torch.ones(len(bfs_trajectory_tensor_list)-1,1),torch.zeros(1,1)],dim=0)
+bf_tau=torch.cat([torch.ones(len(bf_trajectory_tensor_list)-1,1),torch.zeros(1,1)],dim=0)
+
+
+
+
+print(bfs_trajectory.shape)
+print(bfs_trajectory)

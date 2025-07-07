@@ -167,7 +167,7 @@ def test(config: dict):
                 Q=GraphUtils.GraphAlgorithm.compute_BF_step(graph=graph,source_id=0,Q=Q)
                 p_step=np.array([graph.nodes[node]['p'] for node in sorted(graph.nodes())]).reshape(1,-1)
                 p=np.append(p,p_step,axis=0)
-                GraphUtils.GraphManager.remap_node_predecessor_attr_to_sorted_index(graph=graph)
+                GraphUtils.GraphManager.remap_node_predecessor_to_sorted_index(graph=graph)
                 p_idx_step=np.array([graph.nodes[node]['p_idx'] for node in sorted(graph.nodes())]).reshape(1,-1)
                 p_idx=np.append(p_idx,p_idx_step,axis=0)
             print(f"Bellman-Ford Predecessor:")
