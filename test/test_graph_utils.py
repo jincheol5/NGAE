@@ -178,6 +178,57 @@ def test(config: dict):
             for step in p_idx.T:
                 print(*step)
 
+        case 7:
+            """
+            Test 7. algo_trajectory_to_PyG_Data()
+            """
+            graph=nx.DiGraph()
+            graph.add_edge(0,1,w=1)
+            graph.add_edge(0,2,w=1)
+            graph.add_edge(1,3,w=2)
+            graph.add_edge(2,3,w=3)
+            graph.add_edge(0,3,w=4.5)
+            graph.add_edge(3,4,w=0.5)
+
+            graph.add_edge(0,0,w=6)
+            graph.add_edge(1,1,w=6)
+            graph.add_edge(2,2,w=6)
+            graph.add_edge(3,3,w=6)
+            graph.add_edge(4,4,w=6)
+
+            data=GraphUtils.GraphProcessor.algo_trajectory_to_PyG_Data(graph=graph)
+
+            print(f"edge_index:")
+            print(data.edge_index)
+            print()
+
+            print(f"edge_attr:")
+            print(data.edge_attr)
+            print()
+
+            print(f"BFS trajectory:")
+            print(data.bfs)
+            print()
+
+            print(f"Bellman-Ford trajectory:")
+            print(data.bf)
+            print()
+
+            print(f"Predecessor trajectory:")
+            print(data.p)
+            print()
+
+            print(f"Predecessor idx trajectory:")
+            print(data.p_idx)
+            print()
+
+            print(f"BFS tau:")
+            print(data.bfs_tau)
+            print()
+
+            print(f"Bellman-Ford tau:")
+            print(data.bf_tau)
+            print()
 
 """
 Execute Test
