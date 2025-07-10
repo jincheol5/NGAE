@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from torch_geometric.nn import MessagePassing
-
+from .model_train_utils import ModelTrainUtils
 
 """
 Encoder
@@ -83,5 +83,36 @@ class Terminator(torch.nn.Module):
 NGAE
 """
 class NGAE_BF(torch.nn.Module):
-    def __init__(self,latent_dim):
+    def __init__(self,node_dim,edge_dim,latent_dim):
         super().__init__()
+        self.encoder=Encoder(node_dim=node_dim,latent_dim=latent_dim)
+        self.processor=MPNN_Processor(latent_dim=latent_dim,edge_dim=edge_dim)
+        self.decoder=Decoder(latent_dim=latent_dim)
+        self.predecessor=Predecessor(latent_dim=latent_dim,edge_dim=edge_dim)
+        self.terminator=Terminator(latent_dim=latent_dim)
+
+    def forward(self,trajectory,h_0,edge_index,edge_attr,task="train"):
+        seq_len,num_nodes,node_dim=trajectory.size()
+
+
+
+        pre_h=h_0
+        x=trajectory[0]
+        for i in range(seq_len-1): # To do 3
+            z=self.encoder(x=x,h=pre_h)
+            h=self.processor(x=z,edge_index=edge_index,edge_attr=edge_attr)
+            y=self.decoder(x=z,h=h)
+            edge_score=self.predecessor(z=z,h=h,edge_index=edge_index,edge_attr=edge_attr)
+            tau=self.terminator(h=h)
+
+            """
+            set next x, pre_h
+            """
+            x=ModelTrainUtils.teacher_forcing(pred=y,label=trajectory[i+1],p=0.5)
+            pre_h=h
+"""
+To do.
+1. edge_score -> [N,1] p_idx 변환 함수 
+2. [seq_len,N,1] 형태 tensor로부터 loss 계산
+3. input으로 seq_len-1이 들어가야 할지 seq_len이 들어가야 할지?
+"""
