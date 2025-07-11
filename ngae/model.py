@@ -59,12 +59,11 @@ class Predecessor(torch.nn.Module):
             nn.ReLU(),
             nn.Linear(latent_dim,1) 
         )
-    def forward(self,z,h,edge_index,edge_attr):
-        x=torch.cat([z,h],dim=-1)
+    def forward(self,h,edge_index,edge_attr):
         src,dst=edge_index
-        x_j=x[src]
-        x_i=x[dst]
-        score=self.edge_wise_scoring(torch.cat([x_i,x_j,edge_attr],dim=-1))
+        h_j=h[src]
+        h_i=h[dst]
+        score=self.edge_wise_scoring(torch.cat([h_i,h_j,edge_attr],dim=-1))
         return score # [E,1]
 
 class Terminator(torch.nn.Module):
@@ -103,7 +102,7 @@ class NGAE_BF(torch.nn.Module):
             z=self.encoder(x=x,h=pre_h)
             h=self.processor(x=z,edge_index=edge_index,edge_attr=edge_attr)
             y=self.decoder(z=z,h=h)
-            edge_score=self.predecessor(z=z,h=h,edge_index=edge_index,edge_attr=edge_attr)
+            edge_score=self.predecessor(h=h,edge_index=edge_index,edge_attr=edge_attr)
             tau=self.terminator(h=h)
 
             """
