@@ -102,7 +102,7 @@ class NGAE_BF(torch.nn.Module):
         for i in range(seq_len-1):
             z=self.encoder(x=x,h=pre_h)
             h=self.processor(x=z,edge_index=edge_index,edge_attr=edge_attr)
-            y=self.decoder(x=z,h=h)
+            y=self.decoder(z=z,h=h)
             edge_score=self.predecessor(z=z,h=h,edge_index=edge_index,edge_attr=edge_attr)
             tau=self.terminator(h=h)
 
