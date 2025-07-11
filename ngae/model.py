@@ -76,7 +76,7 @@ class Terminator(torch.nn.Module):
         h_mean=h_mean.unsqueeze(0).expand(h.size(0),-1) # [N,latent_dim]
         h_concat=torch.cat([h,h_mean],dim=-1)
         tau=self.linear(h_concat) # [N,1]
-        return tau.mean(dim=0,keepdim=True) # [1,1]
+        return tau.mean(dim=0,keepdim=True).view(-1) # [1,]
 
 
 """
@@ -91,14 +91,15 @@ class NGAE_BF(torch.nn.Module):
         self.predecessor=Predecessor(latent_dim=latent_dim,edge_dim=edge_dim)
         self.terminator=Terminator(latent_dim=latent_dim)
 
-    def forward(self,trajectory,h_0,edge_index,edge_attr,task="train"):
-        seq_len,num_nodes,node_dim=trajectory.size()
+    def forward(self,algo_trajectory,h_0,edge_index,edge_attr,task="train"):
+        pred_y_list=[]
+        pred_edge_score_list=[]
+        pred_tau_list=[]
 
-
-
+        seq_len,num_nodes,_=algo_trajectory.size()
         pre_h=h_0
-        x=trajectory[0]
-        for i in range(seq_len-1): # To do 3
+        x=algo_trajectory[0]
+        for i in range(seq_len-1):
             z=self.encoder(x=x,h=pre_h)
             h=self.processor(x=z,edge_index=edge_index,edge_attr=edge_attr)
             y=self.decoder(x=z,h=h)
@@ -106,10 +107,31 @@ class NGAE_BF(torch.nn.Module):
             tau=self.terminator(h=h)
 
             """
+            stack output
+            """
+            pred_y_list.append(y)
+            pred_edge_score_list.append(edge_score)
+            pred_tau_list.append(tau)
+
+            """
             set next x, pre_h
             """
-            x=ModelTrainUtils.teacher_forcing(pred=y,label=trajectory[i+1],p=0.5)
+            match task:
+                case 'train':
+                    x=ModelTrainUtils.teacher_forcing(pred=y,label=algo_trajectory[i+1],p=0.5)
+                case 'test':
+                    x=y
             pre_h=h
+        """
+        return output
+            -all output is logit
+        """
+        output={}
+        output['y']=torch.stack(pred_y_list,dim=0) # [seq_len,num_nodes,1]
+        output['edge_score']=torch.stack(pred_edge_score_list,dim=0) # [seq_len,edge_score,1]
+        output['tau']=torch.stack(pred_tau_list,dim=0) # [seq_len,1]
+        return output
+
 """
 To do.
 1. edge_score -> [N,1] p_idx 변환 함수 
