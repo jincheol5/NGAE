@@ -57,7 +57,7 @@ class Metrics:
         seq_len,_,_=label.size()
         total_loss=torch.zeros((),device=logit.device) # []
         for i in range(seq_len):
-            loss_i=Metrics.compute_predecessor_loss(pred=logit[i],label=label[i],edge_index=edge_index)
+            loss_i=Metrics.compute_predecessor_loss(logit=logit[i],label=label[i],edge_index=edge_index)
             total_loss+=loss_i
         return total_loss
 
