@@ -96,7 +96,7 @@ class NGAE_BF(torch.nn.Module):
         pred_edge_score_list=[]
         pred_tau_list=[]
 
-        seq_len,num_nodes,_=algo_trajectory.size()
+        seq_len,_,_=algo_trajectory.size()
         pre_h=h_0
         x=algo_trajectory[0]
         for i in range(seq_len-1):
@@ -127,14 +127,8 @@ class NGAE_BF(torch.nn.Module):
             -all output is logit
         """
         output={}
-        output['y']=torch.stack(pred_y_list,dim=0) # [seq_len,num_nodes,1]
-        output['edge_score']=torch.stack(pred_edge_score_list,dim=0) # [seq_len,edge_score,1]
-        output['tau']=torch.stack(pred_tau_list,dim=0) # [seq_len,1]
+        output['y']=torch.stack(pred_y_list,dim=0) # [seq_len-1,N,1]
+        output['edge_score']=torch.stack(pred_edge_score_list,dim=0) # [seq_len-1,E,1]
+        output['tau']=torch.stack(pred_tau_list,dim=0) # [seq_len-1,1]
         return output
 
-"""
-To do.
-1. edge_score -> [N,1] p_idx 변환 함수 
-2. [seq_len,N,1] 형태 tensor로부터 loss 계산
-3. input으로 seq_len-1이 들어가야 할지 seq_len이 들어가야 할지?
-"""

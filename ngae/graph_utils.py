@@ -287,10 +287,10 @@ class GraphUtils:
             p_idx_trajectory=torch.stack(p_idx_trajectory_tensor_list,dim=0)
 
             """
-            compute tau: [seq_len,1]
+            compute tau: [seq_len-1,1]
             """
-            bfs_tau=torch.cat([torch.ones(len(bfs_trajectory_tensor_list)-1,1),torch.zeros(1,1)],dim=0)
-            bf_tau=torch.cat([torch.ones(len(bf_trajectory_tensor_list)-1,1),torch.zeros(1,1)],dim=0)
+            bfs_tau=torch.cat([torch.ones(len(bfs_trajectory_tensor_list)-2,1),torch.zeros(1,1)],dim=0)
+            bf_tau=torch.cat([torch.ones(len(bf_trajectory_tensor_list)-2,1),torch.zeros(1,1)],dim=0)
 
             """
             convert to PyG Data

@@ -9,10 +9,10 @@ class ModelTrainUtils:
 
     @staticmethod
     def compute_BFS_from_logit(logit: torch.Tensor,threshold: float=0.5):
-        prob=torch.sigmoid(logit)           
+        prob=F.sigmoid(logit)           
         mask=prob>=threshold                   
         return mask.to(logit.dtype)
-    
+
     @staticmethod
     def compute_predecessor_idx_from_edge_score(edge_score: torch.Tensor,edge_index: torch.Tensor,num_nodes: int):
         p_idx=torch.full((num_nodes,),-1,dtype=torch.long,device=edge_score.device)
