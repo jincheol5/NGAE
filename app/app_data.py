@@ -39,9 +39,9 @@ def app_data(config: dict):
             App 2.
             Visualize graph
             """
-            file_name=f"{config["task"]}_{config["num_nodes"]}_nodes"
+            file_name=f"{config['task']}_{config['num_nodes']}_nodes"
             graph_list_dict=DataUtils.DataLoader.load_from_pickle(file_name=file_name,dir_type="graph")
-            graph=graph_list_dict[config["graph_type"]][config["graph_id"]]
+            graph=graph_list_dict[config['graph_type']][config['graph_id']]
             GraphUtils.GraphVisualizer.visualize_graph(graph=graph)
         
         case 3:
