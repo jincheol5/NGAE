@@ -85,8 +85,8 @@ class Metrics:
         num_nodes,_=label.size()
 
         p_idx=ModelTrainUtils.compute_predecessor_idx_from_edge_score(edge_score=logit,edge_index=edge_index,num_nodes=num_nodes)
-        correct=(p_idx==label).sum()
-        acc=correct.float()/num_nodes
+        correct=(p_idx==label).sum().item()
+        acc=float(correct)/num_nodes
         return acc
     
     @staticmethod
@@ -122,8 +122,8 @@ class Metrics:
         seq_len,_=logit.size()
         prob=F.sigmoid(logit)
         pred=(prob>0.5).long() 
-        correct=(pred==label).sum()
-        step_acc=correct.float()/seq_len
+        correct=(pred==label).sum().item()
+        step_acc=float(correct)/seq_len
         last_tau=pred[-1,0].item()
         last_acc=1.0 if last_tau==0.0 else 0.0
         return step_acc,last_acc
