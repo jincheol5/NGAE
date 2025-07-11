@@ -20,7 +20,7 @@ class ModelTrainer:
 
                 algo_trajectory=batch.bf # [seq_len,N,1]
                 p_idx_trajectory=batch.p_idx # [seq_len,N,1]
-                tau_seq_label=batch.tau # [seq_len-1,1]
+                tau_seq_label=batch.bf_tau # [seq_len-1,1]
 
                 output=model(algo_trajectory=algo_trajectory,h_0=h_0,edge_index=batch.edge_index,edge_attr=batch.edge_attr,task='train')
                 y_seq=output['y'] # [seq_len-1,N,1]
@@ -63,7 +63,7 @@ class ModelTrainer:
 
                 algo_trajectory=batch.bf # [seq_len,N,1]
                 p_idx_trajectory=batch.p_idx # [seq_len,N,1]
-                tau_seq_label=batch.tau # [seq_len-1,1]
+                tau_seq_label=batch.bf_tau # [seq_len-1,1]
 
                 output=model(algo_trajectory=algo_trajectory,h_0=h_0,edge_index=batch.edge_index,edge_attr=batch.edge_attr,task='test')
                 y_seq=output['y'] # [seq_len-1,N,1]
