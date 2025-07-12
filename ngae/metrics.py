@@ -96,7 +96,7 @@ class Metrics:
         Output:
             -acc
         """
-        num_nodes,_=logit.size(0)
+        num_nodes,_=logit.size()
         prob=F.sigmoid(logit)
         pred=(prob>=0.5).float() 
         correct=(pred==label).sum().item()
