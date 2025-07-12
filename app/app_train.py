@@ -4,7 +4,7 @@ import numpy as np
 import argparse
 import torch
 from torch_geometric.loader import DataLoader
-from ngae import DataUtils,NGAE_BF,ModelTrainer
+from ngae import DataUtils,NGAE_BF,NGAE_BFS,ModelTrainer
 
 def app_train(config: dict):
     """
@@ -53,8 +53,11 @@ def app_train(config: dict):
     """
     model setting
     """
-    model=NGAE_BF(node_dim=1,edge_dim=1,latent_dim=config['latent_dim'])
-
+    match config['task']:
+        case 'bfs':
+            model=NGAE_BFS(node_dim=1,edge_dim=1,latent_dim=config['latent_dim'])
+        case 'bf':
+            model=NGAE_BF(node_dim=1,edge_dim=1,latent_dim=config['latent_dim'])
 
     """
     model training

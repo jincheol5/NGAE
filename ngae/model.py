@@ -80,7 +80,56 @@ class Terminator(torch.nn.Module):
 
 """
 NGAE
+1. NGAE_BFS
+2. NGAE_BF
+3. NGAE
 """
+class NGAE_BFS(torch.nn.Module):
+    def __init__(self,node_dim,edge_dim,latent_dim):
+        super().__init__()
+        self.encoder=Encoder(node_dim=node_dim,latent_dim=latent_dim)
+        self.processor=MPNN_Processor(latent_dim=latent_dim,edge_dim=edge_dim)
+        self.decoder=Decoder(latent_dim=latent_dim)
+        self.terminator=Terminator(latent_dim=latent_dim)
+
+    def forward(self,algo_trajectory,h_0,edge_index,edge_attr,mode="train"):
+        pred_y_list=[]
+        pred_tau_list=[]
+
+        seq_len,_,_=algo_trajectory.size()
+        pre_h=h_0
+        x=algo_trajectory[0]
+        for i in range(seq_len-1):
+            z=self.encoder(x=x,h=pre_h)
+            h=self.processor(x=z,edge_index=edge_index,edge_attr=edge_attr)
+            y=self.decoder(z=z,h=h)
+            tau=self.terminator(h=h)
+
+            """
+            stack output
+            """
+            pred_y_list.append(y)
+            pred_tau_list.append(tau)
+
+            """
+            set next x, pre_h
+            """
+            pred_y=ModelTrainUtils.compute_BFS_from_logit(logit=y)
+            match mode:
+                case 'train':
+                    x=ModelTrainUtils.teacher_forcing(pred=pred_y,label=algo_trajectory[i+1],p=0.5)
+                case 'test':
+                    x=pred_y
+            pre_h=h
+        """
+        return output
+            -all output is logit
+        """
+        output={}
+        output['y']=torch.stack(pred_y_list,dim=0) # [seq_len-1,N,1]
+        output['tau']=torch.stack(pred_tau_list,dim=0) # [seq_len-1,1]
+        return output
+
 class NGAE_BF(torch.nn.Module):
     def __init__(self,node_dim,edge_dim,latent_dim):
         super().__init__()
@@ -90,7 +139,7 @@ class NGAE_BF(torch.nn.Module):
         self.predecessor=Predecessor(latent_dim=latent_dim,edge_dim=edge_dim)
         self.terminator=Terminator(latent_dim=latent_dim)
 
-    def forward(self,algo_trajectory,h_0,edge_index,edge_attr,task="train"):
+    def forward(self,algo_trajectory,h_0,edge_index,edge_attr,mode="train"):
         pred_y_list=[]
         pred_edge_score_list=[]
         pred_tau_list=[]
@@ -115,7 +164,7 @@ class NGAE_BF(torch.nn.Module):
             """
             set next x, pre_h
             """
-            match task:
+            match mode:
                 case 'train':
                     x=ModelTrainUtils.teacher_forcing(pred=y,label=algo_trajectory[i+1],p=0.5)
                 case 'test':
