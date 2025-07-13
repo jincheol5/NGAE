@@ -139,7 +139,7 @@ def app_train(config: dict):
             """
             model test
             """
-            for test_graph_type,test_data_loader in val_data_loader_dict.items():
+            for test_graph_type,test_data_loader in test_data_loader_dict.items():
                 ModelTrainer.test(model=None,graph_type=test_graph_type,data_loader=test_data_loader,config=config)
 
 """
