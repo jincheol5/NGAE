@@ -119,21 +119,21 @@ def app_train(config: dict):
             data loader
             """
             test_data_loader_dict={}
-            test_data_list=DataUtils.DataLoader.load_from_pickle(file_name="val_20",dir_type="val")
+            test_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}",dir_type="test")
             test_data_loader_dict['all']=DataLoader(dataset=test_data_list,batch_size=1,shuffle=True)
-            test_data_list=DataUtils.DataLoader.load_from_pickle(file_name="val_20_ladder",dir_type="val")
+            test_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_ladder",dir_type="test")
             test_data_loader_dict['ladder']=DataLoader(dataset=test_data_list,batch_size=1,shuffle=True)
-            test_data_list=DataUtils.DataLoader.load_from_pickle(file_name="val_20_grid",dir_type="val")
+            test_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_grid",dir_type="test")
             test_data_loader_dict['grid']=DataLoader(dataset=test_data_list,batch_size=1,shuffle=True)
-            test_data_list=DataUtils.DataLoader.load_from_pickle(file_name="val_20_tree",dir_type="val")
+            test_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_tree",dir_type="test")
             test_data_loader_dict['tree']=DataLoader(dataset=test_data_list,batch_size=1,shuffle=True)
-            test_data_list=DataUtils.DataLoader.load_from_pickle(file_name="val_20_erdos_renyi",dir_type="val")
+            test_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_erdos_renyi",dir_type="test")
             test_data_loader_dict['erdos_renyi']=DataLoader(dataset=test_data_list,batch_size=1,shuffle=True)
-            test_data_list=DataUtils.DataLoader.load_from_pickle(file_name="val_20_barabasi_albert",dir_type="val")
+            test_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_barabasi_albert",dir_type="test")
             test_data_loader_dict['barabasi_albert']=DataLoader(dataset=test_data_list,batch_size=1,shuffle=True)
-            test_data_list=DataUtils.DataLoader.load_from_pickle(file_name="val_20_community",dir_type="val")
+            test_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_community",dir_type="test")
             test_data_loader_dict['community']=DataLoader(dataset=test_data_list,batch_size=1,shuffle=True)
-            test_data_list=DataUtils.DataLoader.load_from_pickle(file_name="val_20_caveman",dir_type="val")
+            test_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_caveman",dir_type="test")
             test_data_loader_dict['caveman']=DataLoader(dataset=test_data_list,batch_size=1,shuffle=True)
 
             """
@@ -155,6 +155,7 @@ parser.add_argument("--latent_dim",type=int,default=32)
 parser.add_argument("--optimizer",type=str,default='adam')
 parser.add_argument("--lr",type=float,default=0.0005)
 parser.add_argument("--epochs",type=int,default=3)
+parser.add_argument("--test_num_nodes",type=int,default=20)
 args=parser.parse_args()
 
 config={
@@ -166,7 +167,8 @@ config={
     'latent_dim':args.latent_dim,
     'optimizer':args.optimizer,
     'lr':args.lr,
-    'epochs':args.epochs
+    'epochs':args.epochs,
+    'test_num_nodes':args.test_num_nodes
 }
 
 app_train(config=config)
