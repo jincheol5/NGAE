@@ -158,6 +158,7 @@ parser.add_argument("--epochs",type=int,default=3)
 args=parser.parse_args()
 
 config={
+    'app_num':args.app_num,
     'task':args.task,
     'mode':args.mode,
     'model_name':args.model_name,
