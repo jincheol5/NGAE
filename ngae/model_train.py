@@ -1,8 +1,10 @@
+import os
 import numpy as np
 import torch
 from tqdm import tqdm
 from .metrics import Metrics
-
+from .model import NGAE_BFS,NGAE_BF
+from .data_utils import DataUtils
 
 class ModelTrainer:
     @staticmethod
@@ -54,10 +56,20 @@ class ModelTrainer:
             validate
             """
             for val_graph_type,val_data_loader in val_data_loader_dict.items():
-                ModelTrainer.validate(model=model,val_graph_type=val_graph_type,val_data_loader=val_data_loader,config=config)
+                ModelTrainer.test(model=model,graph_type=val_graph_type,data_loader=val_data_loader,config=config)
+        return model
 
     @staticmethod
-    def validate(model,val_graph_type,val_data_loader,config):
+    def test(model,graph_type,data_loader,config):
+        if config['mode']=="test":
+            match config['model_name']:
+                case 'NGAE_bfs':
+                    model=NGAE_BFS(node_dim=1,edge_dim=1,latent_dim=config['latent_dim'])
+                case 'NGAE_bf':
+                    model=NGAE_BF(node_dim=1,edge_dim=1,latent_dim=config['latent_dim'])
+                case 'NGAE':
+                    pass
+            model=DataUtils.DataLoader.load_model_parameter(model=model,model_name=config['model_name'])
         device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         model.to(device)
         model.eval()
@@ -75,7 +87,7 @@ class ModelTrainer:
                 tau_last_acc_list=[]
 
         with torch.no_grad():
-            for batch in tqdm(val_data_loader,desc=f"Validate {val_graph_type} graph..."):
+            for batch in tqdm(data_loader,desc=f"{config['mode']} {graph_type} graph..."):
                 batch=batch.to(device)
                 h_0=torch.zeros((batch.num_nodes,config['latent_dim']),dtype=torch.float32)
                 h_0=h_0.to(device)
@@ -121,13 +133,13 @@ class ModelTrainer:
                 tau_step_acc=np.mean(tau_step_acc_list)
                 tau_last_acc=np.mean(tau_last_acc_list)
 
-                print(f"Validate {val_graph_type} graph BFS step acc: {y_step_acc} last acc: {y_last_acc}")
-                print(f"Validate {val_graph_type} graph tau step acc: {tau_step_acc} last acc: {tau_last_acc}")
+                print(f"{config['mode']} {graph_type} graph BFS step acc: {y_step_acc} last acc: {y_last_acc}")
+                print(f"{config['mode']} {graph_type} graph tau step acc: {tau_step_acc} last acc: {tau_last_acc}")
             case 'bf':
                 p_step_acc=np.mean(p_step_acc_list)
                 p_last_acc=np.mean(p_last_acc_list)
                 tau_step_acc=np.mean(tau_step_acc_list)
                 tau_last_acc=np.mean(tau_last_acc_list)
 
-                print(f"Validate {val_graph_type} graph predecessor step acc: {p_step_acc} last acc: {p_last_acc}")
-                print(f"Validate {val_graph_type} graph tau step acc: {tau_step_acc} last acc: {tau_last_acc}")
+                print(f"{config['mode']} {graph_type} graph predecessor step acc: {p_step_acc} last acc: {p_last_acc}")
+                print(f"{config['mode']} {graph_type} graph tau step acc: {tau_step_acc} last acc: {tau_last_acc}")

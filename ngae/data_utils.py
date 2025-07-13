@@ -47,3 +47,17 @@ class DataUtils:
                         DataUtils.DataLoader.save_to_pickle(data=value,file_name=file_name+"_community",dir_type=dir_type)
                     case 'caveman':
                         DataUtils.DataLoader.save_to_pickle(data=value,file_name=file_name+"_caveman",dir_type=dir_type)
+        
+        @staticmethod
+        def save_model_parameter(model,model_name="NGAE"):
+            file_name=model_name+".pt"
+            file_path=os.path.join(DataUtils.DataLoader.dataset_path,"inference",file_name)
+            torch.save(model.state_dict(),file_path)
+            print(f"Save {model_name} model parameter")
+        
+        @staticmethod
+        def load_model_parameter(model,model_name="NGAE"):
+            file_name=model_name+".pt"
+            file_path=os.path.join(DataUtils.DataLoader.dataset_path,"inference",file_name)
+            model.load_state_dict(torch.load(file_path))
+            return model
