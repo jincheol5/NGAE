@@ -185,13 +185,12 @@ class ModelTrainer:
     @staticmethod
     def test(model,graph_type,data_loader,config):
         if config['mode']=="test":
-            match config['model_name']:
-                case 'NGAE_bfs':
+            match config['task']:
+                case 'bfs':
                     model=NGAE_BFS(node_dim=1,edge_dim=1,latent_dim=config['latent_dim'])
-                case 'NGAE_bf':
+                case 'bf':
                     model=NGAE_BF(node_dim=1,edge_dim=1,latent_dim=config['latent_dim'])
-                case 'NGAE':
-                    pass
+
             model=DataUtils.DataLoader.load_model_parameter(model=model,model_name=config['model_name'])
         device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         model.to(device)
