@@ -5,7 +5,7 @@ import argparse
 import wandb
 import torch
 from torch_geometric.loader import DataLoader
-from ngae import DataUtils,NGAE_BF,NGAE_BFS,ModelTrainer
+from ngae import DataUtils,NGAE_BF,NGAE_BFS,NGAE,ModelTrainer
 
 def app_train(config: dict):
     """
@@ -26,52 +26,9 @@ def app_train(config: dict):
             App 1.
             train single algo
             """
-            wandb.init(project="NGAE",name=f"{args.task}")
-            wandb.config.update(config)
-            """
-            data loader
-            """
-            train_data_list=DataUtils.DataLoader.load_from_pickle(file_name="train_20",dir_type="train")
-            train_data_loader=DataLoader(dataset=train_data_list,batch_size=1,shuffle=True)
-            val_data_loader_dict={}
-            val_data_list=DataUtils.DataLoader.load_from_pickle(file_name="val_20",dir_type="val")
-            val_data_loader_dict['all']=DataLoader(dataset=val_data_list,batch_size=1,shuffle=True)
-            val_data_list=DataUtils.DataLoader.load_from_pickle(file_name="val_20_ladder",dir_type="val")
-            val_data_loader_dict['ladder']=DataLoader(dataset=val_data_list,batch_size=1,shuffle=True)
-            val_data_list=DataUtils.DataLoader.load_from_pickle(file_name="val_20_grid",dir_type="val")
-            val_data_loader_dict['grid']=DataLoader(dataset=val_data_list,batch_size=1,shuffle=True)
-            val_data_list=DataUtils.DataLoader.load_from_pickle(file_name="val_20_tree",dir_type="val")
-            val_data_loader_dict['tree']=DataLoader(dataset=val_data_list,batch_size=1,shuffle=True)
-            val_data_list=DataUtils.DataLoader.load_from_pickle(file_name="val_20_erdos_renyi",dir_type="val")
-            val_data_loader_dict['erdos_renyi']=DataLoader(dataset=val_data_list,batch_size=1,shuffle=True)
-            val_data_list=DataUtils.DataLoader.load_from_pickle(file_name="val_20_barabasi_albert",dir_type="val")
-            val_data_loader_dict['barabasi_albert']=DataLoader(dataset=val_data_list,batch_size=1,shuffle=True)
-            val_data_list=DataUtils.DataLoader.load_from_pickle(file_name="val_20_community",dir_type="val")
-            val_data_loader_dict['community']=DataLoader(dataset=val_data_list,batch_size=1,shuffle=True)
-            val_data_list=DataUtils.DataLoader.load_from_pickle(file_name="val_20_caveman",dir_type="val")
-            val_data_loader_dict['caveman']=DataLoader(dataset=val_data_list,batch_size=1,shuffle=True)
-
-            """
-            model setting
-            """
-            match config['task']:
-                case 'bfs':
-                    model=NGAE_BFS(node_dim=1,edge_dim=1,latent_dim=config['latent_dim'])
-                case 'bf':
-                    model=NGAE_BF(node_dim=1,edge_dim=1,latent_dim=config['latent_dim'])
-
-            """
-            model training
-            """
-            model=ModelTrainer.train(model=model,train_data_loader=train_data_loader,val_data_loader_dict=val_data_loader_dict,config=config)
-
-        case 2:
-            """
-            App 2.
-            train single algo and save
-            """
-            wandb.init(project="NGAE",name=f"{args.task}")
-            wandb.config.update(config)
+            if config['wandb']:
+                wandb.init(project="NGAE",name=f"{args.task}")
+                wandb.config.update(config)
             """
             data loader
             """
@@ -112,9 +69,58 @@ def app_train(config: dict):
             """
             save model
             """
-            model_name=config['model_name']
-            DataUtils.DataLoader.save_model_parameter(model=model,model_name=model_name)
-        
+            if config['save_model']:
+                model_name=config['model_name']
+                DataUtils.DataLoader.save_model_parameter(model=model,model_name=model_name)
+
+        case 2:
+            """
+            App 2.
+            train simultaneously
+            """
+            if config['wandb']:
+                wandb.init(project="NGAE",name=f"bfs_and_bf")
+                wandb.config.update(config)
+            """
+            data loader
+            """
+            train_data_list=DataUtils.DataLoader.load_from_pickle(file_name="train_20",dir_type="train")
+            train_data_loader=DataLoader(dataset=train_data_list,batch_size=1,shuffle=True)
+            val_data_loader_dict={}
+            val_data_list=DataUtils.DataLoader.load_from_pickle(file_name="val_20",dir_type="val")
+            val_data_loader_dict['all']=DataLoader(dataset=val_data_list,batch_size=1,shuffle=True)
+            val_data_list=DataUtils.DataLoader.load_from_pickle(file_name="val_20_ladder",dir_type="val")
+            val_data_loader_dict['ladder']=DataLoader(dataset=val_data_list,batch_size=1,shuffle=True)
+            val_data_list=DataUtils.DataLoader.load_from_pickle(file_name="val_20_grid",dir_type="val")
+            val_data_loader_dict['grid']=DataLoader(dataset=val_data_list,batch_size=1,shuffle=True)
+            val_data_list=DataUtils.DataLoader.load_from_pickle(file_name="val_20_tree",dir_type="val")
+            val_data_loader_dict['tree']=DataLoader(dataset=val_data_list,batch_size=1,shuffle=True)
+            val_data_list=DataUtils.DataLoader.load_from_pickle(file_name="val_20_erdos_renyi",dir_type="val")
+            val_data_loader_dict['erdos_renyi']=DataLoader(dataset=val_data_list,batch_size=1,shuffle=True)
+            val_data_list=DataUtils.DataLoader.load_from_pickle(file_name="val_20_barabasi_albert",dir_type="val")
+            val_data_loader_dict['barabasi_albert']=DataLoader(dataset=val_data_list,batch_size=1,shuffle=True)
+            val_data_list=DataUtils.DataLoader.load_from_pickle(file_name="val_20_community",dir_type="val")
+            val_data_loader_dict['community']=DataLoader(dataset=val_data_list,batch_size=1,shuffle=True)
+            val_data_list=DataUtils.DataLoader.load_from_pickle(file_name="val_20_caveman",dir_type="val")
+            val_data_loader_dict['caveman']=DataLoader(dataset=val_data_list,batch_size=1,shuffle=True)
+
+            """
+            model setting
+            """
+            model=NGAE(node_dim=1,edge_dim=1,latent_dim=config['latent_dim'])
+
+            """
+            model training
+            """
+            model=ModelTrainer.train_simultaneously(model=model,train_data_loader=train_data_loader,val_data_loader_dict=val_data_loader_dict,config=config)
+
+            """
+            save model
+            """
+            if config['save_model']:
+                model_name=config['model_name']
+                DataUtils.DataLoader.save_model_parameter(model=model,model_name=model_name)
+
         case 3:
             """
             App 3.
@@ -146,6 +152,38 @@ def app_train(config: dict):
             """
             for test_graph_type,test_data_loader in test_data_loader_dict.items():
                 ModelTrainer.test(model=None,graph_type=test_graph_type,data_loader=test_data_loader,config=config)
+        
+        case 4:
+            """
+            App 4.
+            test simultaneously
+            """
+            """
+            data loader
+            """
+            test_data_loader_dict={}
+            test_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}",dir_type="test")
+            test_data_loader_dict['all']=DataLoader(dataset=test_data_list,batch_size=1,shuffle=True)
+            test_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_ladder",dir_type="test")
+            test_data_loader_dict['ladder']=DataLoader(dataset=test_data_list,batch_size=1,shuffle=True)
+            test_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_grid",dir_type="test")
+            test_data_loader_dict['grid']=DataLoader(dataset=test_data_list,batch_size=1,shuffle=True)
+            test_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_tree",dir_type="test")
+            test_data_loader_dict['tree']=DataLoader(dataset=test_data_list,batch_size=1,shuffle=True)
+            test_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_erdos_renyi",dir_type="test")
+            test_data_loader_dict['erdos_renyi']=DataLoader(dataset=test_data_list,batch_size=1,shuffle=True)
+            test_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_barabasi_albert",dir_type="test")
+            test_data_loader_dict['barabasi_albert']=DataLoader(dataset=test_data_list,batch_size=1,shuffle=True)
+            test_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_community",dir_type="test")
+            test_data_loader_dict['community']=DataLoader(dataset=test_data_list,batch_size=1,shuffle=True)
+            test_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_caveman",dir_type="test")
+            test_data_loader_dict['caveman']=DataLoader(dataset=test_data_list,batch_size=1,shuffle=True)
+
+            """
+            model test
+            """
+            for test_graph_type,test_data_loader in test_data_loader_dict.items():
+                ModelTrainer.test_simultaneously(model=None,graph_type=test_graph_type,data_loader=test_data_loader,config=config)
 
 """
 Execute app_train
@@ -161,6 +199,8 @@ parser.add_argument("--optimizer",type=str,default='adam')
 parser.add_argument("--lr",type=float,default=0.0005)
 parser.add_argument("--epochs",type=int,default=1)
 parser.add_argument("--test_num_nodes",type=int,default=20)
+parser.add_argument("--save_model",type=int,default=0)
+parser.add_argument("--wandb",type=int,default=0)
 args=parser.parse_args()
 
 config={
@@ -173,6 +213,8 @@ config={
     'optimizer':args.optimizer,
     'lr':args.lr,
     'epochs':args.epochs,
-    'test_num_nodes':args.test_num_nodes
+    'test_num_nodes':args.test_num_nodes,
+    'save_model':args.save_model,
+    'wandb':args.wandb
 }
 app_train(config=config)

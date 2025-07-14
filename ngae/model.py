@@ -180,3 +180,80 @@ class NGAE_BF(torch.nn.Module):
         output['tau']=torch.stack(pred_tau_list,dim=0) # [seq_len-1,1]
         return output
 
+class NGAE(torch.nn.Module):
+    def __init__(self,node_dim,edge_dim,latent_dim):
+        super().__init__()
+        self.bfs_encoder=Encoder(node_dim=node_dim,latent_dim=latent_dim)
+        self.bf_encoder=Encoder(node_dim=node_dim,latent_dim=latent_dim)
+        self.processor=MPNN_Processor(latent_dim=latent_dim,edge_dim=edge_dim)
+        self.bfs_decoder=Decoder(latent_dim=latent_dim)
+        self.bf_decoder=Decoder(latent_dim=latent_dim)
+        self.predecessor=Predecessor(latent_dim=latent_dim,edge_dim=edge_dim)
+        self.bfs_terminator=Terminator(latent_dim=latent_dim)
+        self.bf_terminator=Terminator(latent_dim=latent_dim)
+    
+    def forward(self,bfs_trajectory,bf_trajectory,h_0,edge_index,edge_attr,mode="train"):
+        pred_bfs_list=[]
+        pred_bf_list=[]
+        pred_edge_score_list=[]
+        pred_bfs_tau_list=[]
+        pred_bf_tau_list=[]
+
+        bfs_seq_len,_,_=bfs_trajectory.size()
+        bf_seq_len,_,_=bf_trajectory.size()
+        seq_len=max(bfs_seq_len,bf_seq_len)
+        pre_bfs_h=h_0
+        pre_bf_h=h_0
+        bfs_x=bfs_trajectory[0]
+        bf_x=bf_trajectory[0]
+        for i in range(seq_len-1):
+            if i<=bfs_seq_len-2:
+                bfs_z=self.bfs_encoder(x=bfs_x,h=pre_bfs_h)
+                bfs_h=self.processor(x=bfs_z,edge_index=edge_index,edge_attr=edge_attr)
+                bfs_y=self.bfs_decoder(z=bfs_z,h=bfs_h)
+                bfs_tau=self.bfs_terminator(h=bfs_h)
+
+                # stack output
+                pred_bfs_list.append(bfs_y)
+                pred_bfs_tau_list.append(bfs_tau)
+
+                # set next x, pre_h
+                pred_y=ModelTrainUtils.compute_BFS_from_logit(logit=bfs_y)
+                match mode:
+                    case 'train':
+                        bfs_x=ModelTrainUtils.teacher_forcing(pred=pred_y,label=bfs_trajectory[i+1],p=0.5)
+                    case 'test':
+                        bfs_x=pred_y
+                pre_bfs_h=bfs_h
+
+            if i<=bf_seq_len-2:
+                bf_z=self.bf_encoder(x=bf_x,h=pre_bf_h)
+                bf_h=self.processor(x=bf_z,edge_index=edge_index,edge_attr=edge_attr)
+                bf_y=self.bf_decoder(z=bf_z,h=bf_h)
+                edge_score=self.predecessor(h=bf_h,edge_index=edge_index,edge_attr=edge_attr)
+                bf_tau=self.bf_terminator(h=bf_h)
+
+                # stack output
+                pred_bf_list.append(bf_y)
+                pred_edge_score_list.append(edge_score)
+                pred_bf_tau_list.append(bf_tau)
+
+                # set next x, pre_h
+                match mode:
+                    case 'train':
+                        x=ModelTrainUtils.teacher_forcing(pred=bf_y,label=bf_trajectory[i+1],p=0.5)
+                    case 'test':
+                        x=bf_y
+                pre_bf_h=bf_h
+        """
+        return output
+            -all output is logit
+        """
+        output={}
+        output['bfs_y']=torch.stack(pred_bfs_list,dim=0) # [bfs_seq_len-1,N,1]
+        output['bfs_tau']=torch.stack(pred_bfs_tau_list,dim=0) # [bfs_seq_len-1,1]
+
+        output['bf_y']=torch.stack(pred_bf_list,dim=0) # [bf_seq_len-1,N,1]
+        output['edge_score']=torch.stack(pred_edge_score_list,dim=0) # [bf_seq_len-1,E,1]
+        output['bf_tau']=torch.stack(pred_bf_tau_list,dim=0) # [bf_seq_len-1,1]
+        return output
