@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import wandb
 import torch
 from tqdm import tqdm
 from .metrics import Metrics
@@ -14,6 +15,17 @@ class ModelTrainer:
         optimizer=torch.optim.Adam(model.parameters(),lr=config['lr']) if config['optimizer']=='adam' else torch.optim.SGD(model.parameters(),lr=config['lr'])
 
         for epoch in tqdm(range(config['epochs']),desc=f"Training {config['task']}..."):
+            """
+            epoch loss list for wandb
+            """
+            epoch_algo_loss=[]
+            epoch_p_loss=[]
+            epoch_tau_loss=[]
+            epoch_total_loss=[]
+
+            """
+            model train
+            """
             model.train()
             for batch in tqdm(train_data_loader,desc=f"Epoch {epoch}..."):
                 batch=batch.to(device)
@@ -41,17 +53,45 @@ class ModelTrainer:
                         y_seq_loss=Metrics.compute_BFS_seq_loss(logit=y_seq,label=algo_trajectory[1:])
                         tau_seq_loss=Metrics.compute_tau_seq_loss(logit=tau_seq,label=tau_seq_label)
                         total_loss=y_seq_loss+tau_seq_loss
+
+                        # wandb
+                        epoch_algo_loss.append(y_seq_loss)
+                        epoch_tau_loss.append(tau_seq_loss)
+                        epoch_total_loss.append(total_loss)
                     case 'bf':
                         y_seq_loss=Metrics.compute_BF_seq_loss(logit=y_seq,label=algo_trajectory[1:])
-                        edge_score_seq_loss=Metrics.compute_predecessor_seq_loss(logit=edge_score_seq,label=p_idx_trajectory[1:],edge_index=batch.edge_index)
+                        p_seq_loss=Metrics.compute_predecessor_seq_loss(logit=edge_score_seq,label=p_idx_trajectory[1:],edge_index=batch.edge_index)
                         tau_seq_loss=Metrics.compute_tau_seq_loss(logit=tau_seq,label=tau_seq_label)
-                        total_loss=y_seq_loss+edge_score_seq_loss+tau_seq_loss
+                        total_loss=y_seq_loss+p_seq_loss+tau_seq_loss
+
+                        # wandb
+                        epoch_algo_loss.append(y_seq_loss)
+                        epoch_p_loss.append(p_seq_loss)
+                        epoch_tau_loss.append(tau_seq_loss)
+                        epoch_total_loss.append(total_loss)
                 """
                 back propagation
                 """
                 optimizer.zero_grad()
                 total_loss.backward()
                 optimizer.step()
+            """
+            wandb log
+            """
+            match config['task']:
+                case 'bfs':
+                    wandb.log({
+                        'bfs_loss':torch.stack(epoch_algo_loss).mean(),
+                        'tau_loss':torch.stack(epoch_tau_loss).mean(),
+                        'total_loss':torch.stack(epoch_total_loss).mean()
+                    },step=epoch)
+                case 'bf':
+                    wandb.log({
+                        'bf_loss':torch.stack(epoch_algo_loss).mean(),
+                        'p_loss':torch.stack(epoch_p_loss).mean(),
+                        'tau_loss':torch.stack(epoch_tau_loss).mean(),
+                        'total_loss':torch.stack(epoch_total_loss).mean()
+                    },step=epoch)
             """
             validate
             """

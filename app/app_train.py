@@ -2,6 +2,7 @@ import os
 import random
 import numpy as np
 import argparse
+import wandb
 import torch
 from torch_geometric.loader import DataLoader
 from ngae import DataUtils,NGAE_BF,NGAE_BFS,ModelTrainer
@@ -25,6 +26,8 @@ def app_train(config: dict):
             App 1.
             train single algo
             """
+            wandb.init(project="NGAE",name=f"{args.task}")
+            wandb.config.update(config)
             """
             data loader
             """
@@ -67,6 +70,8 @@ def app_train(config: dict):
             App 2.
             train single algo and save
             """
+            wandb.init(project="NGAE",name=f"{args.task}")
+            wandb.config.update(config)
             """
             data loader
             """
@@ -154,7 +159,7 @@ parser.add_argument("--seed",type=int,default=42)
 parser.add_argument("--latent_dim",type=int,default=32)
 parser.add_argument("--optimizer",type=str,default='adam')
 parser.add_argument("--lr",type=float,default=0.0005)
-parser.add_argument("--epochs",type=int,default=3)
+parser.add_argument("--epochs",type=int,default=1)
 parser.add_argument("--test_num_nodes",type=int,default=20)
 args=parser.parse_args()
 
@@ -170,5 +175,4 @@ config={
     'epochs':args.epochs,
     'test_num_nodes':args.test_num_nodes
 }
-
 app_train(config=config)
