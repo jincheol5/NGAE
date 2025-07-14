@@ -190,7 +190,7 @@ Execute app_train
 """
 parser=argparse.ArgumentParser()
 parser.add_argument("--app_num",type=int,default=1)
-parser.add_argument("--task",type=str,default='bfs',required=True)
+parser.add_argument("--task",type=str,default='bfs')
 parser.add_argument("--mode",type=str,default='train')
 parser.add_argument("--model_name",type=str,default='NGAE_bfs')
 parser.add_argument("--seed",type=int,default=42)
