@@ -14,7 +14,7 @@ class ModelTrainUtils:
         return mask.to(logit.dtype)
 
     @staticmethod
-    def compute_predecessor_idx_from_edge_score(edge_score: torch.Tensor,edge_index: torch.Tensor,num_nodes: int):
+    def compute_predecessor_idx_from_edge_score_old(edge_score: torch.Tensor,edge_index: torch.Tensor,num_nodes: int):
         p_idx=torch.full((num_nodes,),-1,dtype=torch.long,device=edge_score.device)
         edge_score=edge_score.view(-1) # [E,]
         dst=edge_index[1]
@@ -28,3 +28,26 @@ class ModelTrainUtils:
             p_idx[target_node]=prob.argmax()
 
         return p_idx.unsqueeze(1)
+
+    @staticmethod
+    def compute_predecessor_idx_from_edge_score(edge_score: torch.Tensor,edge_index: torch.Tensor,num_nodes: int):
+        scores=edge_score.view(-1) # [E]
+        dst=edge_index[1] # [E]
+        device=scores.device
+
+        node_ids=torch.arange(num_nodes,device=device).unsqueeze(1) # [N,1]
+        mask=(node_ids==dst.unsqueeze(0)) # [N,E]
+
+        # global argmax: mask=False 자리엔 -inf 넣어 선택되지 않도록
+        neg_inf=torch.finfo(scores.dtype).min
+        masked_scores=torch.where(mask,scores.unsqueeze(0), neg_inf) # [N,E]
+        global_idx=masked_scores.argmax(dim=1) # [N]
+
+        # 각 True 위치에 대해 “로컬 순서” 만들기: cumsum-1
+        # 예: mask[i] = [0,1,1,0,1] → cumsum = [0,1,2,2,3] → rank = cumsum-1 = [-1,0,1,1,2]
+        # 로컬 엣지 0번째 → rank=0, 1번째→1, 2번째→2
+        rank_matrix=mask.cumsum(dim=1)-1 # [N,E]
+
+        # global_idx 위치에서 local rank 뽑기
+        local_idx=rank_matrix.gather(1,global_idx.unsqueeze(1)) # [N,1]
+        return local_idx
