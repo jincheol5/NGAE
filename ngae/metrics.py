@@ -82,7 +82,7 @@ class Metrics:
         num_nodes,_=label.size() 
 
         # 노드별로 LogSumExp 계산
-        m_i=torch.zeros(num_nodes,device=scores.device).scatter_reduce("amax",0,dst,scores) # [N,], 각 노드로 들어오는 edge 중 최대 logit m_i
+        m_i=torch.zeros(num_nodes,device=scores.device).scatter_reduce(dim=0,index=dst,src=scores,reduce="amax") # [N,], 각 노드로 들어오는 edge 중 최대 logit m_i
         exp_norm=torch.exp(scores-m_i[dst]) # [E,]
         sum_exp=torch.zeros_like(m_i).scatter_add_(0,dst,exp_norm) # [N,], 정규화 지수 합
         lse=m_i+torch.log(sum_exp) # [N,], LogSumExp
