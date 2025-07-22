@@ -14,11 +14,6 @@ class Metrics:
         Output:
             -loss scalar tensor: [] (0차원)
         """
-        # total_loss=torch.zeros((),device=logit.device) # []
-        # seq_len,_,_=logit.size()
-        # for i in range(seq_len):
-        #     total_loss+=F.binary_cross_entropy_with_logits(input=logit[i],target=label[i])
-        # return total_loss
         loss_per_element=F.binary_cross_entropy_with_logits(input=logit,target=label,reduction='mean') # [seq_len-1,N,1]
         loss_per_seq=loss_per_element.mean(dim=(1,2)) # [seq_len,]
         return loss_per_seq.sum()
@@ -32,11 +27,6 @@ class Metrics:
         Output:
             -loss scalar tensor: [] (0차원)
         """
-        # total_loss=torch.zeros((),device=logit.device) # []
-        # seq_len,_,_=logit.size()
-        # for i in range(seq_len):
-        #     total_loss+=F.mse_loss(input=logit[i],target=label[i])
-        # return total_loss
         loss_per_element=F.mse_loss(input=logit,target=label,reduction='none') # [seq_len-1,N,1]
         loss_per_seq=loss_per_element.mean(dim=(1,2)) # [seq_len,]
         return loss_per_seq.sum()

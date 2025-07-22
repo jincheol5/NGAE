@@ -17,7 +17,6 @@ class Encoder(torch.nn.Module):
 """
 Processor
 1. MPNN
-2. GAT
 """
 class MPNN_Processor(MessagePassing):
     def __init__(self,latent_dim,edge_dim,aggr='max'):
