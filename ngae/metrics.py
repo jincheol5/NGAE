@@ -14,7 +14,7 @@ class Metrics:
         Output:
             -loss scalar tensor: [] (0차원)
         """
-        loss_per_element=F.binary_cross_entropy_with_logits(input=logit,target=label,reduction='mean') # [seq_len-1,N,1]
+        loss_per_element=F.binary_cross_entropy_with_logits(input=logit,target=label,reduction='none') # [seq_len-1,N,1]
         loss_per_seq=loss_per_element.mean(dim=(1,2)) # [seq_len,]
         return loss_per_seq.sum()
 

@@ -5,7 +5,7 @@ import argparse
 import wandb
 import torch
 from torch_geometric.loader import DataLoader
-from ngae import DataUtils,NGAE_BF,NGAE_BFS,NGAE,ModelTrainer
+from ngae import DataUtils,ModelTrainer,NGAE_MPNN_BFS,NGAE_MPNN_BF,NGAE_MPNN,NGAE_GAT_BFS,NGAE_GAT_BF,NGAE_GAT
 
 def app_train(config: dict):
     """
@@ -55,11 +55,15 @@ def app_train(config: dict):
             """
             model setting
             """
-            match config['task']:
-                case 'bfs':
-                    model=NGAE_BFS(node_dim=1,edge_dim=1,latent_dim=config['latent_dim'])
-                case 'bf':
-                    model=NGAE_BF(node_dim=1,edge_dim=1,latent_dim=config['latent_dim'])
+            match config['processor'],config['task']:
+                case 'mpnn','bfs':
+                    model=NGAE_MPNN_BFS(node_dim=1,edge_dim=1,latent_dim=config['latent_dim'])
+                case 'mpnn','bf':
+                    model=NGAE_MPNN_BF(node_dim=1,edge_dim=1,latent_dim=config['latent_dim'])
+                case 'gat','bfs':
+                    pass
+                case 'gat','bf':
+                    pass
 
             """
             model training
@@ -107,7 +111,11 @@ def app_train(config: dict):
             """
             model setting
             """
-            model=NGAE(node_dim=1,edge_dim=1,latent_dim=config['latent_dim'])
+            match config['processor']:
+                case 'mpnn':
+                    model=NGAE_MPNN(node_dim=1,edge_dim=1,latent_dim=config['latent_dim'])
+                case 'gat':
+                    pass
 
             """
             model training
@@ -192,7 +200,8 @@ parser=argparse.ArgumentParser()
 parser.add_argument("--app_num",type=int,default=1)
 parser.add_argument("--task",type=str,default='bfs')
 parser.add_argument("--mode",type=str,default='train')
-parser.add_argument("--model_name",type=str,default='NGAE_bfs')
+parser.add_argument("--processor",type=str,default='mpnn')
+parser.add_argument("--model_name",type=str,default='NGAE_MPNN_bfs')
 parser.add_argument("--seed",type=int,default=42)
 parser.add_argument("--latent_dim",type=int,default=32)
 parser.add_argument("--optimizer",type=str,default='adam')
@@ -207,6 +216,7 @@ config={
     'app_num':args.app_num,
     'task':args.task,
     'mode':args.mode,
+    'processor':args.processor,
     'model_name':args.model_name,
     'seed':args.seed,
     'latent_dim':args.latent_dim,

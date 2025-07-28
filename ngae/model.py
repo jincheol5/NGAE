@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from torch_geometric.nn import MessagePassing
+from torch_geometric.nn import MessagePassing,GATConv
 from .model_train_utils import ModelTrainUtils
 
 """
@@ -17,6 +17,7 @@ class Encoder(torch.nn.Module):
 """
 Processor
 1. MPNN
+2. GAT
 """
 class MPNN_Processor(MessagePassing):
     def __init__(self,latent_dim,edge_dim,aggr='max'):
@@ -79,11 +80,12 @@ class Terminator(torch.nn.Module):
 
 """
 NGAE
-1. NGAE_BFS
-2. NGAE_BF
-3. NGAE
+1. NGAE_MPNN_BFS
+2. NGAE_MPNN_BF
+3. NGAE_MPNN
+4. NGAE_GAT_BFS
 """
-class NGAE_BFS(torch.nn.Module):
+class NGAE_MPNN_BFS(torch.nn.Module):
     def __init__(self,node_dim,edge_dim,latent_dim):
         super().__init__()
         self.encoder=Encoder(node_dim=node_dim,latent_dim=latent_dim)
@@ -129,7 +131,7 @@ class NGAE_BFS(torch.nn.Module):
         output['tau']=torch.stack(pred_tau_list,dim=0) # [seq_len-1,1]
         return output
 
-class NGAE_BF(torch.nn.Module):
+class NGAE_MPNN_BF(torch.nn.Module):
     def __init__(self,node_dim,edge_dim,latent_dim):
         super().__init__()
         self.encoder=Encoder(node_dim=node_dim,latent_dim=latent_dim)
@@ -179,7 +181,7 @@ class NGAE_BF(torch.nn.Module):
         output['tau']=torch.stack(pred_tau_list,dim=0) # [seq_len-1,1]
         return output
 
-class NGAE(torch.nn.Module):
+class NGAE_MPNN(torch.nn.Module):
     def __init__(self,node_dim,edge_dim,latent_dim):
         super().__init__()
         self.bfs_encoder=Encoder(node_dim=node_dim,latent_dim=latent_dim)
@@ -256,3 +258,12 @@ class NGAE(torch.nn.Module):
         output['edge_score']=torch.stack(pred_edge_score_list,dim=0) # [bf_seq_len-1,E,1]
         output['bf_tau']=torch.stack(pred_bf_tau_list,dim=0) # [bf_seq_len-1,1]
         return output
+
+class NGAE_GAT_BFS:
+    pass
+
+class NGAE_GAT_BF:
+    pass
+
+class NGAE_GAT:
+    pass
