@@ -35,11 +35,11 @@ class MPNN_Processor(MessagePassing):
     
     def message(self,x_i,x_j,edge_attr):
         m=self.M(torch.cat([x_i,x_j,edge_attr],dim=-1))
-        return F.relu(m)
+        return m
     
     def update(self,aggr_out,x):
         u=self.U(torch.cat([x,aggr_out],dim=-1))
-        return F.relu(u)
+        return u
 
     def forward(self,x,edge_index,edge_attr):
         h=self.propagate(edge_index=edge_index,x=x,edge_attr=edge_attr)
