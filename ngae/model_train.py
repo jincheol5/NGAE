@@ -4,7 +4,7 @@ import wandb
 import torch
 from tqdm import tqdm
 from .metrics import Metrics
-from .model import NGAE_MPNN_BFS,NGAE_MPNN_BF,NGAE_MPNN
+from .model import NGAE_MPNN_BFS,NGAE_MPNN_BF,NGAE_MPNN,NGAE_GAT_BFS,NGAE_GAT_BF,NGAE_GAT
 from .data_utils import DataUtils
 
 class ModelTrainer:
@@ -191,9 +191,9 @@ class ModelTrainer:
                 case 'mpnn','bf':
                     model=NGAE_MPNN_BF(node_dim=1,edge_dim=1,latent_dim=config['latent_dim'])
                 case 'gat','bfs':
-                    pass
+                    model=NGAE_GAT_BFS(node_dim=1,edge_dim=1,latent_dim=config['latent_dim'])
                 case 'gat','bf':
-                    pass
+                    model=NGAE_GAT_BF(node_dim=1,edge_dim=1,latent_dim=config['latent_dim'])
 
             model=DataUtils.DataLoader.load_model_parameter(model=model,model_name=config['model_name'])
         device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -277,7 +277,7 @@ class ModelTrainer:
                 case 'mpnn':
                     model=NGAE_MPNN(node_dim=1,edge_dim=1,latent_dim=config['latent_dim'])
                 case 'gat':
-                    pass
+                    model=NGAE_GAT(node_dim=1,edge_dim=1,latent_dim=config['latent_dim'])
             model=DataUtils.DataLoader.load_model_parameter(model=model,model_name=config['model_name'])
         device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         model.to(device)

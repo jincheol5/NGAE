@@ -61,9 +61,9 @@ def app_train(config: dict):
                 case 'mpnn','bf':
                     model=NGAE_MPNN_BF(node_dim=1,edge_dim=1,latent_dim=config['latent_dim'])
                 case 'gat','bfs':
-                    pass
+                    model=NGAE_GAT_BFS(node_dim=1,edge_dim=1,latent_dim=config['latent_dim'])
                 case 'gat','bf':
-                    pass
+                    model=NGAE_GAT_BF(node_dim=1,edge_dim=1,latent_dim=config['latent_dim'])
 
             """
             model training
@@ -115,7 +115,7 @@ def app_train(config: dict):
                 case 'mpnn':
                     model=NGAE_MPNN(node_dim=1,edge_dim=1,latent_dim=config['latent_dim'])
                 case 'gat':
-                    pass
+                    model=NGAE_GAT(node_dim=1,edge_dim=1,latent_dim=config['latent_dim'])
 
             """
             model training
