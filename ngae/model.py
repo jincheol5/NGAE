@@ -64,8 +64,8 @@ class GAT_GumbelSoftmax(GATConv):
             edge_dim=edge_dim,
             **kwargs,
         )
-        self.tau = tau
-        self.hard = hard
+        self.tau=tau
+        self.hard=hard
 
     def edge_update(self,alpha_j: Tensor,alpha_i: OptTensor,edge_attr: OptTensor,index: Tensor,ptr: OptTensor,dim_size: Optional[int],) -> Tensor:
         alpha=alpha_j if alpha_i is None else alpha_j+alpha_i
@@ -125,7 +125,7 @@ class Decoder(torch.nn.Module):
         y=self.linear(torch.cat([z,h],dim=-1))
         return y # [N,1]
 
-class Predecessor_paper(torch.nn.Module):
+class Predecessor(torch.nn.Module):
     """
     NGAE paper 방식
     """
@@ -143,27 +143,27 @@ class Predecessor_paper(torch.nn.Module):
         score=self.edge_wise_scoring(torch.cat([h_i,h_j,edge_attr],dim=-1))
         return score # [E,1]
 
-class Predecessor(torch.nn.Module):
-    """
-    clrs 방식
-    """
-    def __init__(self,latent_dim,edge_dim):
-        super().__init__()
-        self.p1=nn.Linear(latent_dim,latent_dim)
-        self.p2=nn.Linear(latent_dim,latent_dim)
-        self.p3=nn.Linear(edge_dim,latent_dim)
-        self.p4=nn.Linear(latent_dim,1)
-    def forward(self,h,edge_index,edge_attr):
-        src,dst=edge_index
-        p1_all=self.p1(h)
-        p2_all=self.p2(h)
-        p1_dst=p1_all[dst] 
-        p2_src=p2_all[src]
-        p3=self.p3(edge_attr)
-        p_e=p2_src+p3
-        p_m=torch.max(p1_dst,p_e)         
-        score=self.p4(p_m) 
-        return score # [E,1]
+# class Predecessor(torch.nn.Module):
+#     """
+#     clrs 방식
+#     """
+#     def __init__(self,latent_dim,edge_dim):
+#         super().__init__()
+#         self.p1=nn.Linear(latent_dim,latent_dim)
+#         self.p2=nn.Linear(latent_dim,latent_dim)
+#         self.p3=nn.Linear(edge_dim,latent_dim)
+#         self.p4=nn.Linear(latent_dim,1)
+#     def forward(self,h,edge_index,edge_attr):
+#         src,dst=edge_index
+#         p1_all=self.p1(h)
+#         p2_all=self.p2(h)
+#         p1_dst=p1_all[dst] 
+#         p2_src=p2_all[src]
+#         p3=self.p3(edge_attr)
+#         p_e=p2_src+p3
+#         p_m=torch.max(p1_dst,p_e)         
+#         score=self.p4(p_m) 
+#         return score # [E,1]
 
 class Terminator(torch.nn.Module):
     def __init__(self,latent_dim):
