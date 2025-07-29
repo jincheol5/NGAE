@@ -364,7 +364,8 @@ class NGAE_GAT_BFS(torch.nn.Module):
     def __init__(self,node_dim,edge_dim,latent_dim):
         super().__init__()
         self.encoder=Encoder(node_dim=node_dim,latent_dim=latent_dim)
-        self.processor=GAT_GumbelSoftmax(in_channels=latent_dim,out_channels=latent_dim,edge_dim=edge_dim,tau=0.5)
+        # self.processor=GAT_GumbelSoftmax(in_channels=latent_dim,out_channels=latent_dim,edge_dim=edge_dim,tau=0.5)
+        self.processor=GATConv(in_channels=latent_dim,out_channels=latent_dim,edge_dim=edge_dim)
         self.decoder=Decoder(latent_dim=latent_dim)
         self.terminator=Terminator(latent_dim=latent_dim)
 
@@ -410,7 +411,8 @@ class NGAE_GAT_BF(torch.nn.Module):
     def __init__(self,node_dim,edge_dim,latent_dim):
         super().__init__()
         self.encoder=Encoder(node_dim=node_dim,latent_dim=latent_dim)
-        self.processor=GAT_GumbelSoftmax(in_channels=latent_dim,out_channels=latent_dim,edge_dim=edge_dim,tau=0.5)
+        # self.processor=GAT_GumbelSoftmax(in_channels=latent_dim,out_channels=latent_dim,edge_dim=edge_dim,tau=0.5)
+        self.processor=GATConv(in_channels=latent_dim,out_channels=latent_dim,edge_dim=edge_dim)
         self.decoder=Decoder(latent_dim=latent_dim)
         self.predecessor=Predecessor(latent_dim=latent_dim,edge_dim=edge_dim)
         self.terminator=Terminator(latent_dim=latent_dim)
@@ -461,7 +463,8 @@ class NGAE_GAT(torch.nn.Module):
         super().__init__()
         self.bfs_encoder=Encoder(node_dim=node_dim,latent_dim=latent_dim)
         self.bf_encoder=Encoder(node_dim=node_dim,latent_dim=latent_dim)
-        self.processor=GAT_GumbelSoftmax(in_channels=latent_dim,out_channels=latent_dim,edge_dim=edge_dim,tau=0.5)
+        # self.processor=GAT_GumbelSoftmax(in_channels=latent_dim,out_channels=latent_dim,edge_dim=edge_dim,tau=0.5)
+        self.processor=GATConv(in_channels=latent_dim,out_channels=latent_dim,edge_dim=edge_dim)
         self.bfs_decoder=Decoder(latent_dim=latent_dim)
         self.bf_decoder=Decoder(latent_dim=latent_dim)
         self.predecessor=Predecessor(latent_dim=latent_dim,edge_dim=edge_dim)
