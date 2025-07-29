@@ -1,19 +1,12 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Optional, Tuple, Union
+from typing import Optional,Tuple,Union
 from torch import Tensor
 from torch_geometric.nn import MessagePassing,GATConv
-from torch_geometric.typing import (
-    Adj,
-    NoneType,
-    OptPairTensor,
-    OptTensor,
-    Size,
-    SparseTensor,
-    torch_sparse,
-)
-from torch_scatter import scatter_softmax, scatter_max
+from torch_geometric.typing import OptTensor
+from torch_geometric.utils import softmax
+from torch_scatter import scatter_max
 from .model_train_utils import ModelTrainUtils
 
 
@@ -97,7 +90,7 @@ class GAT_GumbelSoftmax(GATConv):
             logits=alpha/self.tau
 
         # 그룹별 soft attention (softmax)
-        soft_attn=scatter_softmax(logits,index,ptr,dim_size=dim_size)
+        soft_attn=softmax(logits,index,ptr,num_nodes=dim_size)
 
         # hard 모드라면 straight-through one-hot 생성
         if self.hard:
