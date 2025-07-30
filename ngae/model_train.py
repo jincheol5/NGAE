@@ -29,7 +29,7 @@ class ModelTrainer:
             model train
             """
             model.train()
-            for batch in tqdm(train_data_loader,desc=f"Epoch {epoch}..."):
+            for batch in tqdm(train_data_loader,desc=f"Epoch {epoch+1}..."):
                 batch=batch.to(device)
                 h_0=torch.zeros((batch.num_nodes,config['latent_dim']),dtype=torch.float32)
                 h_0=h_0.to(device)
@@ -82,9 +82,9 @@ class ModelTrainer:
             """
             algo_loss=torch.stack(epoch_algo_loss).mean()
             pre_model=early_stop(val_loss=algo_loss,model=model)
-            if pre_model is not None:
+            if early_stop.early_stop:
                 model=pre_model
-                print(f"Early Stopping in epoch {epoch}")
+                print(f"Early Stopping in epoch {epoch+1}")
                 break
 
             """
@@ -134,7 +134,7 @@ class ModelTrainer:
             model train
             """
             model.train()
-            for batch in tqdm(train_data_loader,desc=f"Epoch {epoch}..."):
+            for batch in tqdm(train_data_loader,desc=f"Epoch {epoch+1}..."):
                 batch=batch.to(device)
                 h_0=torch.zeros((batch.num_nodes,config['latent_dim']),dtype=torch.float32)
                 h_0=h_0.to(device)
@@ -181,9 +181,9 @@ class ModelTrainer:
             """
             algo_loss=torch.stack(epoch_bf_loss).mean()
             pre_model=early_stop(val_loss=algo_loss,model=model)
-            if pre_model is not None:
+            if early_stop.early_stop:
                 model=pre_model
-                print(f"Early Stopping in epoch {epoch}")
+                print(f"Early Stopping in epoch {epoch+1}")
                 break
 
             """
