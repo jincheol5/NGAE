@@ -80,7 +80,7 @@ class ModelTrainer:
             """
             Early stopping
             """
-            algo_loss=torch.stack(epoch_algo_loss).mean()
+            algo_loss=torch.stack(epoch_algo_loss).mean().item()
             pre_model=early_stop(val_loss=algo_loss,model=model)
             if early_stop.early_stop:
                 model=pre_model
@@ -179,7 +179,7 @@ class ModelTrainer:
             """
             Early Stopping
             """
-            algo_loss=torch.stack(epoch_bf_loss).mean()
+            algo_loss=torch.stack(epoch_bf_loss).mean().item()
             pre_model=early_stop(val_loss=algo_loss,model=model)
             if early_stop.early_stop:
                 model=pre_model
