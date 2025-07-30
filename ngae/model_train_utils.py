@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 import torch.nn.functional as F
 
@@ -51,3 +52,28 @@ class ModelTrainUtils:
         # global_idx 위치에서 local rank 뽑기
         local_idx=rank_matrix.gather(1,global_idx.unsqueeze(1)) # [N,1]
         return local_idx
+
+class EarlyStopping:
+    """
+    Args:
+        patience
+    """
+    def __init__(self,patience=3):
+        self.patience=patience
+        self.prev_loss=np.inf
+        self.prev_state = None
+        self.early_stop=False
+    def __call__(self,val_loss:float,model:torch.nn.Module):
+        if self.prev_loss==np.inf:
+            self.prev_loss=val_loss
+            self.prev_state={k: v.clone() for k,v in model.state_dict().items()}
+            return None
+        
+        if self.prev_loss<val_loss:
+            model.load_state_dict(self.prev_state)
+            return model
+        
+        if val_loss<self.prev_loss:
+            self.prev_loss=val_loss
+            self.prev_state={k: v.clone() for k,v in model.state_dict().items()}
+            return None

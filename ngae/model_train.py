@@ -5,6 +5,7 @@ import torch
 from tqdm import tqdm
 from .metrics import Metrics
 from .model import NGAE_MPNN_BFS,NGAE_MPNN_BF,NGAE_MPNN,NGAE_GAT_BFS,NGAE_GAT_BF,NGAE_GAT
+from .model_train_utils import EarlyStopping
 from .data_utils import DataUtils
 
 class ModelTrainer:
@@ -13,6 +14,7 @@ class ModelTrainer:
         device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         model.to(device)
         optimizer=torch.optim.Adam(model.parameters(),lr=config['lr']) if config['optimizer']=='adam' else torch.optim.SGD(model.parameters(),lr=config['lr'])
+        early_stop=EarlyStopping(patience=config['patience'])
 
         for epoch in tqdm(range(config['epochs']),desc=f"Training {config['task']}..."):
             """
@@ -76,6 +78,16 @@ class ModelTrainer:
                 total_loss.backward()
                 optimizer.step()
             """
+            Early stopping
+            """
+            algo_loss=torch.stack(epoch_algo_loss).mean()
+            pre_model=early_stop(val_loss=algo_loss,model=model)
+            if pre_model is not None:
+                model=pre_model
+                print(f"Early Stopping in epoch {epoch}")
+                break
+
+            """
             wandb log
             """
             if config['wandb']:
@@ -105,6 +117,7 @@ class ModelTrainer:
         device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         model.to(device)
         optimizer=torch.optim.Adam(model.parameters(),lr=config['lr']) if config['optimizer']=='adam' else torch.optim.SGD(model.parameters(),lr=config['lr'])
+        early_stop=EarlyStopping(patience=config['patience'])
 
         for epoch in tqdm(range(config['epochs']),desc=f"Training {config['task']}..."):
             """
@@ -163,6 +176,16 @@ class ModelTrainer:
                 optimizer.zero_grad()
                 total_loss.backward()
                 optimizer.step()
+            """
+            Early Stopping
+            """
+            algo_loss=torch.stack(epoch_bf_loss).mean()
+            pre_model=early_stop(val_loss=algo_loss,model=model)
+            if pre_model is not None:
+                model=pre_model
+                print(f"Early Stopping in epoch {epoch}")
+                break
+
             """
             wandb log
             """
@@ -269,6 +292,7 @@ class ModelTrainer:
 
                 print(f"{config['mode']} {graph_type} graph predecessor step acc: {p_step_acc} last acc: {p_last_acc}")
                 print(f"{config['mode']} {graph_type} graph tau step acc: {tau_step_acc} last acc: {tau_last_acc}")
+                
     
     @staticmethod
     def test_simultaneously(model,graph_type,data_loader,config):

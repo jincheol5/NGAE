@@ -204,6 +204,7 @@ parser.add_argument("--processor",type=str,default='mpnn')
 parser.add_argument("--model_name",type=str,default='NGAE_MPNN_bfs')
 parser.add_argument("--seed",type=int,default=42)
 parser.add_argument("--latent_dim",type=int,default=32)
+parser.add_argument("--patience",type=int,default=3)
 parser.add_argument("--optimizer",type=str,default='adam')
 parser.add_argument("--lr",type=float,default=0.0005)
 parser.add_argument("--epochs",type=int,default=1)
@@ -220,6 +221,7 @@ config={
     'model_name':args.model_name,
     'seed':args.seed,
     'latent_dim':args.latent_dim,
+    'patience':args.patience,
     'optimizer':args.optimizer,
     'lr':args.lr,
     'epochs':args.epochs,
