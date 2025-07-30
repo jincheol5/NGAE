@@ -520,9 +520,9 @@ class NGAE_GAT(torch.nn.Module):
                 # set next x, pre_h
                 match mode:
                     case 'train':
-                        x=ModelTrainUtils.teacher_forcing(pred=bf_y,label=bf_trajectory[i+1],p=0.5)
+                        bf_x=ModelTrainUtils.teacher_forcing(pred=bf_y,label=bf_trajectory[i+1],p=0.5)
                     case 'test':
-                        x=bf_y
+                        bf_x=bf_y
                 pre_bf_h=bf_h
         """
         return output
