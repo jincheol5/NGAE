@@ -22,18 +22,18 @@ def app_data(config: dict):
                     num_graphs (each type): 5 
                     num_nodes: 50, 100, 1000
             """
-            # train_20_nodes=GraphUtils.GraphGenerator.generate_7_type_graphs(num_graphs=100,num_nodes=20)
-            # val_20_nodes=GraphUtils.GraphGenerator.generate_7_type_graphs(num_graphs=5,num_nodes=20)
-            # test_20_nodes=GraphUtils.GraphGenerator.generate_7_type_graphs(num_graphs=5,num_nodes=20)
-            # test_50_nodes=GraphUtils.GraphGenerator.generate_7_type_graphs(num_graphs=5,num_nodes=50)
-            # test_100_nodes=GraphUtils.GraphGenerator.generate_7_type_graphs(num_graphs=5,num_nodes=100)
+            train_20_nodes=GraphUtils.GraphGenerator.generate_7_type_graphs(num_graphs=100,num_nodes=20)
+            val_20_nodes=GraphUtils.GraphGenerator.generate_7_type_graphs(num_graphs=5,num_nodes=20)
+            test_20_nodes=GraphUtils.GraphGenerator.generate_7_type_graphs(num_graphs=5,num_nodes=20)
+            test_50_nodes=GraphUtils.GraphGenerator.generate_7_type_graphs(num_graphs=5,num_nodes=50)
+            test_100_nodes=GraphUtils.GraphGenerator.generate_7_type_graphs(num_graphs=5,num_nodes=100)
             test_1000_nodes=GraphUtils.GraphGenerator.generate_7_type_graphs(num_graphs=5,num_nodes=1000)
 
-            # DataUtils.DataLoader.save_to_pickle(data=train_20_nodes,file_name="train_20_nodes",dir_type="graph")
-            # DataUtils.DataLoader.save_to_pickle(data=val_20_nodes,file_name="val_20_nodes",dir_type="graph")
-            # DataUtils.DataLoader.save_to_pickle(data=test_20_nodes,file_name="test_20_nodes",dir_type="graph")
-            # DataUtils.DataLoader.save_to_pickle(data=test_50_nodes,file_name="test_50_nodes",dir_type="graph")
-            # DataUtils.DataLoader.save_to_pickle(data=test_100_nodes,file_name="test_100_nodes",dir_type="graph")
+            DataUtils.DataLoader.save_to_pickle(data=train_20_nodes,file_name="train_20_nodes",dir_type="graph")
+            DataUtils.DataLoader.save_to_pickle(data=val_20_nodes,file_name="val_20_nodes",dir_type="graph")
+            DataUtils.DataLoader.save_to_pickle(data=test_20_nodes,file_name="test_20_nodes",dir_type="graph")
+            DataUtils.DataLoader.save_to_pickle(data=test_50_nodes,file_name="test_50_nodes",dir_type="graph")
+            DataUtils.DataLoader.save_to_pickle(data=test_100_nodes,file_name="test_100_nodes",dir_type="graph")
             DataUtils.DataLoader.save_to_pickle(data=test_1000_nodes,file_name="test_1000_nodes",dir_type="graph")
         
         case 2:
