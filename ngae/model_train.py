@@ -328,7 +328,7 @@ class ModelTrainer:
                 bfs_tau_seq_label=batch.bfs_tau 
                 bf_tau_seq_label=batch.bf_tau
 
-                output=model(bfs_trajectory=bfs_trajectory,bf_trajectory=bf_trajectory,h_0=h_0,edge_index=batch.edge_index,edge_attr=batch.edge_attr,mode='train')
+                output=model(bfs_trajectory=bfs_trajectory,bf_trajectory=bf_trajectory,h_0=h_0,edge_index=batch.edge_index,edge_attr=batch.edge_attr,mode='test')
                 bfs_y_seq=output['bfs_y']
                 bf_y_seq=output['bf_y']
                 edge_score_seq=output['edge_score']   
