@@ -51,48 +51,41 @@ def app_data(config: dict):
             App 3.
             Convert graph algo trajectory to PyG Data and save using pickle 
             """
-            # train_20_nodes=DataUtils.DataLoader.load_from_pickle(file_name="train_20_nodes",dir_type="graph")
-            # val_20_nodes=DataUtils.DataLoader.load_from_pickle(file_name="val_20_nodes",dir_type="graph")
-            # test_20_nodes=DataUtils.DataLoader.load_from_pickle(file_name="test_20_nodes",dir_type="graph")
-            # test_50_nodes=DataUtils.DataLoader.load_from_pickle(file_name="test_50_nodes",dir_type="graph")
-            # test_100_nodes=DataUtils.DataLoader.load_from_pickle(file_name="test_100_nodes",dir_type="graph")
-            test_1000_nodes=DataUtils.DataLoader.load_from_pickle(file_name="test_1000_nodes",dir_type="graph")
+            train_20_nodes=DataUtils.DataLoader.load_from_pickle(file_name="train_20_nodes",dir_type="graph")
+            val_20_nodes=DataUtils.DataLoader.load_from_pickle(file_name="val_20_nodes",dir_type="graph")
+            test_20_nodes=DataUtils.DataLoader.load_from_pickle(file_name="test_20_nodes",dir_type="graph")
+            test_50_nodes=DataUtils.DataLoader.load_from_pickle(file_name="test_50_nodes",dir_type="graph")
+            test_100_nodes=DataUtils.DataLoader.load_from_pickle(file_name="test_100_nodes",dir_type="graph")
 
-            # """
-            # train_20_nodes
-            # """
-            # data_list_dict=GraphUtils.GraphProcessor.graph_list_dict_to_PyG_Data_list_dict(graph_list_dict=train_20_nodes,file_name="train_20_nodes")
-            # DataUtils.DataLoader.save_data_list_dict(data_list_dict=data_list_dict,file_name="train_20",dir_type="train")
+            """
+            train_20_nodes
+            """
+            data_list_dict=GraphUtils.GraphProcessor.graph_list_dict_to_PyG_Data_list_dict(graph_list_dict=train_20_nodes,file_name="train_20_nodes")
+            DataUtils.DataLoader.save_data_list_dict(data_list_dict=data_list_dict,file_name="train_20",dir_type="train")
 
-            # """
-            # val_20_nodes
-            # """
-            # data_list_dict=GraphUtils.GraphProcessor.graph_list_dict_to_PyG_Data_list_dict(graph_list_dict=val_20_nodes,file_name="val_20_nodes")
-            # DataUtils.DataLoader.save_data_list_dict(data_list_dict=data_list_dict,file_name="val_20",dir_type="val")
+            """
+            val_20_nodes
+            """
+            data_list_dict=GraphUtils.GraphProcessor.graph_list_dict_to_PyG_Data_list_dict(graph_list_dict=val_20_nodes,file_name="val_20_nodes")
+            DataUtils.DataLoader.save_data_list_dict(data_list_dict=data_list_dict,file_name="val_20",dir_type="val")
 
-            # """
-            # test_20_nodes
-            # """
-            # data_list_dict=GraphUtils.GraphProcessor.graph_list_dict_to_PyG_Data_list_dict(graph_list_dict=test_20_nodes,file_name="test_20_nodes")
-            # DataUtils.DataLoader.save_data_list_dict(data_list_dict=data_list_dict,file_name="test_20",dir_type="test")
+            """
+            test_20_nodes
+            """
+            data_list_dict=GraphUtils.GraphProcessor.graph_list_dict_to_PyG_Data_list_dict(graph_list_dict=test_20_nodes,file_name="test_20_nodes")
+            DataUtils.DataLoader.save_data_list_dict(data_list_dict=data_list_dict,file_name="test_20",dir_type="test")
         
-            # """
-            # test_50_nodes
-            # """
-            # data_list_dict=GraphUtils.GraphProcessor.graph_list_dict_to_PyG_Data_list_dict(graph_list_dict=test_50_nodes,file_name="test_50_nodes")
-            # DataUtils.DataLoader.save_data_list_dict(data_list_dict=data_list_dict,file_name="test_50",dir_type="test")
+            """
+            test_50_nodes
+            """
+            data_list_dict=GraphUtils.GraphProcessor.graph_list_dict_to_PyG_Data_list_dict(graph_list_dict=test_50_nodes,file_name="test_50_nodes")
+            DataUtils.DataLoader.save_data_list_dict(data_list_dict=data_list_dict,file_name="test_50",dir_type="test")
             
-            # """
-            # test_100_nodes
-            # """
-            # data_list_dict=GraphUtils.GraphProcessor.graph_list_dict_to_PyG_Data_list_dict(graph_list_dict=test_100_nodes,file_name="test_100_nodes")
-            # DataUtils.DataLoader.save_data_list_dict(data_list_dict=data_list_dict,file_name="test_100",dir_type="test")
-
             """
-            test_1000_nodes
+            test_100_nodes
             """
-            data_list=GraphUtils.GraphProcessor.graph_list_to_PyG_Data_list(graph_list=test_1000_nodes['all'],graph_type='all',file_name="test_1000_nodes")
-            DataUtils.DataLoader.save_data_list(data_list=data_list,file_name="test_1000",dir_type="test")
+            data_list_dict=GraphUtils.GraphProcessor.graph_list_dict_to_PyG_Data_list_dict(graph_list_dict=test_100_nodes,file_name="test_100_nodes")
+            DataUtils.DataLoader.save_data_list_dict(data_list_dict=data_list_dict,file_name="test_100",dir_type="test")
 
 
 """
