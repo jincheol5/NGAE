@@ -28,8 +28,13 @@ class DataUtils:
             return data
 
         @staticmethod
-        def save_data_list(data_list_dict: dict,file_name: str,dir_type: Literal['graph','test','train','val']):
-            for key,value in tqdm(data_list_dict.items(),desc=f"Save {file_name} data list..."):
+        def save_data_list(data_list: list,file_name: str,dir_type: Literal['graph','test','train','val']):
+            DataUtils.DataLoader.save_to_pickle(data=data_list,file_name=file_name,dir_type=dir_type)
+            print(f"Save {file_name} data list")
+
+        @staticmethod
+        def save_data_list_dict(data_list_dict: dict,file_name: str,dir_type: Literal['graph','test','train','val']):
+            for key,value in tqdm(data_list_dict.items(),desc=f"Save {file_name} data list dict..."):
                 match key:
                     case 'all':
                         DataUtils.DataLoader.save_to_pickle(data=value,file_name=file_name,dir_type=dir_type)
