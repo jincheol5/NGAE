@@ -320,7 +320,7 @@ class GraphUtils:
         def graph_list_to_PyG_Data_list(graph_list,graph_type,file_name: str="train_20_nodes"):
             data_list=[]
             for graph_id,graph in tqdm(enumerate(graph_list),desc=f"Convert {file_name} {graph_type} graph_list to PyG_Data_list..."):
-                for source_id in graph.nodes():
+                for source_id in tqdm(graph.nodes(),desc=f"{graph_id} graph convert..."):
                     data_list.append(GraphUtils.GraphProcessor.algo_trajectory_to_PyG_Data(graph=graph,graph_type=graph_type,graph_id=graph_id,source_id=source_id))
             return data_list
 
