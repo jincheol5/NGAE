@@ -138,24 +138,31 @@ def app_train(config: dict):
             data loader
             """
             test_data_loader_dict={}
-            test_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}",dir_type="test")
-            test_data_loader_dict['all']=DataLoader(dataset=test_data_list,batch_size=1,shuffle=True)
+            test_ladder_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_ladder",dir_type="test")
+            test_data_loader_dict['ladder']=DataLoader(dataset=test_ladder_data_list,batch_size=1,shuffle=True)
+            test_grid_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_grid",dir_type="test")
+            test_data_loader_dict['grid']=DataLoader(dataset=test_grid_data_list,batch_size=1,shuffle=True)
+            test_tree_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_tree",dir_type="test")
+            test_data_loader_dict['tree']=DataLoader(dataset=test_tree_data_list,batch_size=1,shuffle=True)
+            test_erdos_renyi_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_erdos_renyi",dir_type="test")
+            test_data_loader_dict['erdos_renyi']=DataLoader(dataset=test_erdos_renyi_data_list,batch_size=1,shuffle=True)
+            test_barabasi_albert_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_barabasi_albert",dir_type="test")
+            test_data_loader_dict['barabasi_albert']=DataLoader(dataset=test_barabasi_albert_data_list,batch_size=1,shuffle=True)
+            test_community_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_community",dir_type="test")
+            test_data_loader_dict['community']=DataLoader(dataset=test_community_data_list,batch_size=1,shuffle=True)
+            test_caveman_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_caveman",dir_type="test")
+            test_data_loader_dict['caveman']=DataLoader(dataset=test_caveman_data_list,batch_size=1,shuffle=True)
 
             if config['test_num_nodes']==20 or config['test_num_nodes']==50 or config['test_num_nodes']==100:
-                test_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_ladder",dir_type="test")
-                test_data_loader_dict['ladder']=DataLoader(dataset=test_data_list,batch_size=1,shuffle=True)
-                test_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_grid",dir_type="test")
-                test_data_loader_dict['grid']=DataLoader(dataset=test_data_list,batch_size=1,shuffle=True)
-                test_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_tree",dir_type="test")
-                test_data_loader_dict['tree']=DataLoader(dataset=test_data_list,batch_size=1,shuffle=True)
-                test_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_erdos_renyi",dir_type="test")
-                test_data_loader_dict['erdos_renyi']=DataLoader(dataset=test_data_list,batch_size=1,shuffle=True)
-                test_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_barabasi_albert",dir_type="test")
-                test_data_loader_dict['barabasi_albert']=DataLoader(dataset=test_data_list,batch_size=1,shuffle=True)
-                test_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_community",dir_type="test")
-                test_data_loader_dict['community']=DataLoader(dataset=test_data_list,batch_size=1,shuffle=True)
-                test_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_caveman",dir_type="test")
-                test_data_loader_dict['caveman']=DataLoader(dataset=test_data_list,batch_size=1,shuffle=True)
+                test_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}",dir_type="test")
+                test_data_loader_dict['all']=DataLoader(dataset=test_data_list,batch_size=1,shuffle=True)
+
+            if config['test_num_nodes']==1000:
+                test_data_list=[]
+                data_list=[test_ladder_data_list,test_grid_data_list,test_tree_data_list,test_erdos_renyi_data_list,test_barabasi_albert_data_list,test_community_data_list,test_caveman_data_list]
+                for each_data_list in data_list:
+                    test_data_list+=each_data_list
+                test_data_loader_dict['all']=DataLoader(dataset=test_data_list,batch_size=1,shuffle=True)
 
             """
             model test
@@ -172,24 +179,31 @@ def app_train(config: dict):
             data loader
             """
             test_data_loader_dict={}
-            test_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}",dir_type="test")
-            test_data_loader_dict['all']=DataLoader(dataset=test_data_list,batch_size=1,shuffle=True)
+            test_ladder_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_ladder",dir_type="test")
+            test_data_loader_dict['ladder']=DataLoader(dataset=test_ladder_data_list,batch_size=1,shuffle=True)
+            test_grid_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_grid",dir_type="test")
+            test_data_loader_dict['grid']=DataLoader(dataset=test_grid_data_list,batch_size=1,shuffle=True)
+            test_tree_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_tree",dir_type="test")
+            test_data_loader_dict['tree']=DataLoader(dataset=test_tree_data_list,batch_size=1,shuffle=True)
+            test_erdos_renyi_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_erdos_renyi",dir_type="test")
+            test_data_loader_dict['erdos_renyi']=DataLoader(dataset=test_erdos_renyi_data_list,batch_size=1,shuffle=True)
+            test_barabasi_albert_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_barabasi_albert",dir_type="test")
+            test_data_loader_dict['barabasi_albert']=DataLoader(dataset=test_barabasi_albert_data_list,batch_size=1,shuffle=True)
+            test_community_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_community",dir_type="test")
+            test_data_loader_dict['community']=DataLoader(dataset=test_community_data_list,batch_size=1,shuffle=True)
+            test_caveman_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_caveman",dir_type="test")
+            test_data_loader_dict['caveman']=DataLoader(dataset=test_caveman_data_list,batch_size=1,shuffle=True)
 
             if config['test_num_nodes']==20 or config['test_num_nodes']==50 or config['test_num_nodes']==100:
-                test_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_ladder",dir_type="test")
-                test_data_loader_dict['ladder']=DataLoader(dataset=test_data_list,batch_size=1,shuffle=True)
-                test_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_grid",dir_type="test")
-                test_data_loader_dict['grid']=DataLoader(dataset=test_data_list,batch_size=1,shuffle=True)
-                test_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_tree",dir_type="test")
-                test_data_loader_dict['tree']=DataLoader(dataset=test_data_list,batch_size=1,shuffle=True)
-                test_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_erdos_renyi",dir_type="test")
-                test_data_loader_dict['erdos_renyi']=DataLoader(dataset=test_data_list,batch_size=1,shuffle=True)
-                test_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_barabasi_albert",dir_type="test")
-                test_data_loader_dict['barabasi_albert']=DataLoader(dataset=test_data_list,batch_size=1,shuffle=True)
-                test_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_community",dir_type="test")
-                test_data_loader_dict['community']=DataLoader(dataset=test_data_list,batch_size=1,shuffle=True)
-                test_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_caveman",dir_type="test")
-                test_data_loader_dict['caveman']=DataLoader(dataset=test_data_list,batch_size=1,shuffle=True)
+                test_data_list=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}",dir_type="test")
+                test_data_loader_dict['all']=DataLoader(dataset=test_data_list,batch_size=1,shuffle=True)
+
+            if config['test_num_nodes']==1000:
+                test_data_list=[]
+                data_list=[test_ladder_data_list,test_grid_data_list,test_tree_data_list,test_erdos_renyi_data_list,test_barabasi_albert_data_list,test_community_data_list,test_caveman_data_list]
+                for each_data_list in data_list:
+                    test_data_list+=each_data_list
+                test_data_loader_dict['all']=DataLoader(dataset=test_data_list,batch_size=1,shuffle=True)
 
             """
             model test

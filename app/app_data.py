@@ -86,8 +86,17 @@ def app_data(config: dict):
             """
             data_list_dict=GraphUtils.GraphProcessor.graph_list_dict_to_PyG_Data_list_dict(graph_list_dict=test_100_nodes,file_name="test_100_nodes")
             DataUtils.DataLoader.save_data_list_dict(data_list_dict=data_list_dict,file_name="test_100",dir_type="test")
-
-
+        
+        case 4:
+            """
+            App 4.
+            Convert graph algo trajectory to PyG Data and save using pickle
+            1000 nodes
+            """
+            test_1000_nodes=DataUtils.DataLoader.load_from_pickle(file_name="test_1000_nodes",dir_type="graph")
+            graph_list=test_1000_nodes[config['graph_type']]
+            data_list=GraphUtils.GraphProcessor.graph_list_to_PyG_Data_list(graph_list=graph_list,graph_type=config['graph_type'],file_name=f"test_1000_nodes_{config['graph_type']}")
+            DataUtils.DataLoader.save_data_list(data_list=data_list,file_name=f"test_1000_{config['graph_type']}",dir_type="test")
 """
 Execute app_data
 """
