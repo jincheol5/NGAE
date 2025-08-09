@@ -4,54 +4,25 @@ import torch.nn.functional as F
 
 class ModelTrainUtils:
     @staticmethod
+    def convert_edge_score_to_softmax_one_hot_p(edge_score: torch.Tensor,edge_index: torch.Tensor,num_nodes:int):
+        logits=torch.full((num_nodes,num_nodes),fill_value=-float('inf'),device=edge_score.device,dtype=torch.float32)
+        edge_score=edge_score.squeeze(-1)
+        src,tar=edge_index  
+        logits[tar,src]=edge_score
+        probs=F.softmax(logits,dim=1) # target 노드(행) 기준 softmax 적용
+        return probs.unsqueeze(-1) # [N,N,1]
+
+    @staticmethod
     def teacher_forcing(pred: torch.Tensor,label: torch.Tensor,p: float=0.5):
         mask=torch.rand_like(pred)<p    
         return torch.where(mask,label,pred)
 
     @staticmethod
-    def compute_BFS_from_logit(logit: torch.Tensor,threshold: float=0.5):
+    def compute_r_from_logit(logit: torch.Tensor):
         prob=F.sigmoid(logit)           
-        mask=prob>=threshold                   
+        mask=prob>=0.5                   
         return mask.to(logit.dtype)
 
-    @staticmethod
-    def compute_predecessor_idx_from_edge_score_old(edge_score: torch.Tensor,edge_index: torch.Tensor,num_nodes: int):
-        p_idx=torch.full((num_nodes,),-1,dtype=torch.long,device=edge_score.device)
-        edge_score=edge_score.view(-1) # [E,]
-        dst=edge_index[1]
-
-        for target_node in range(num_nodes):
-            mask=(dst==target_node)
-            if not mask.any():
-                continue
-            incoming_score=edge_score[mask]
-            prob=F.softmax(incoming_score,dim=0)
-            p_idx[target_node]=prob.argmax()
-
-        return p_idx.unsqueeze(1)
-
-    @staticmethod
-    def compute_predecessor_idx_from_edge_score(edge_score: torch.Tensor,edge_index: torch.Tensor,num_nodes: int):
-        scores=edge_score.view(-1) # [E]
-        dst=edge_index[1] # [E]
-        device=scores.device
-
-        node_ids=torch.arange(num_nodes,device=device).unsqueeze(1) # [N,1]
-        mask=(node_ids==dst.unsqueeze(0)) # [N,E]
-
-        # global argmax: mask=False 자리엔 -inf 넣어 선택되지 않도록
-        neg_inf=torch.finfo(scores.dtype).min
-        masked_scores=torch.where(mask,scores.unsqueeze(0), neg_inf) # [N,E]
-        global_idx=masked_scores.argmax(dim=1) # [N]
-
-        # 각 True 위치에 대해 “로컬 순서” 만들기: cumsum-1
-        # 예: mask[i] = [0,1,1,0,1] → cumsum = [0,1,2,2,3] → rank = cumsum-1 = [-1,0,1,1,2]
-        # 로컬 엣지 0번째 → rank=0, 1번째→1, 2번째→2
-        rank_matrix=mask.cumsum(dim=1)-1 # [N,E]
-
-        # global_idx 위치에서 local rank 뽑기
-        local_idx=rank_matrix.gather(1,global_idx.unsqueeze(1)) # [N,1]
-        return local_idx
 
 class EarlyStopping:
     def __init__(self,patience=1):

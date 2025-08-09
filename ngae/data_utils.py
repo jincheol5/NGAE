@@ -1,8 +1,6 @@
 import os
-import numpy as np
 import pickle
 import gzip
-import networkx as nx
 import torch
 from tqdm import tqdm
 from typing_extensions import Literal
@@ -28,16 +26,16 @@ class DataUtils:
             return data
 
         @staticmethod
-        def save_data_list(data_list: list,file_name: str,dir_type: Literal['graph','test','train','val']):
-            DataUtils.DataLoader.save_to_pickle(data=data_list,file_name=file_name,dir_type=dir_type)
-            print(f"Save {file_name} data list")
+        def save_data_dict(data_dict: dict,graph_type: str,file_name: str,dir_type: Literal['graph','test','train','val']):
+            DataUtils.DataLoader.save_to_pickle(data=data_dict,file_name=file_name+f"_{graph_type}",dir_type=dir_type)
+            print(f"Save {file_name} data_dict")
 
         @staticmethod
-        def save_data_list_dict(data_list_dict: dict,file_name: str,dir_type: Literal['graph','test','train','val']):
-            for key,value in tqdm(data_list_dict.items(),desc=f"Save {file_name} data list dict..."):
+        def save_all_data_dict(all_data_dict: dict,file_name: str,dir_type: Literal['graph','test','train','val']):
+            for key,value in tqdm(all_data_dict.items(),desc=f"Save {file_name} all_data_dict..."):
                 match key:
                     case 'all':
-                        DataUtils.DataLoader.save_to_pickle(data=value,file_name=file_name,dir_type=dir_type)
+                        DataUtils.DataLoader.save_to_pickle(data=value,file_name=file_name+"_all",dir_type=dir_type)
                     case 'ladder':
                         DataUtils.DataLoader.save_to_pickle(data=value,file_name=file_name+"_ladder",dir_type=dir_type)
                     case 'grid':
@@ -52,7 +50,7 @@ class DataUtils:
                         DataUtils.DataLoader.save_to_pickle(data=value,file_name=file_name+"_community",dir_type=dir_type)
                     case 'caveman':
                         DataUtils.DataLoader.save_to_pickle(data=value,file_name=file_name+"_caveman",dir_type=dir_type)
-        
+
         @staticmethod
         def save_model_parameter(model,model_name="NGAE"):
             file_name=model_name+".pt"
