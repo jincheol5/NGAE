@@ -20,13 +20,14 @@ def app_data(config: dict):
 
                 test:
                     num_graphs (each type): 5 
-                    num_nodes: 50, 100, 1000
+                    num_nodes: 20, 50, 100, 500, 1000
             """
             train_20_nodes=GraphUtils.GraphGenerator.generate_7_type_graphs(num_graphs=100,num_nodes=20)
             val_20_nodes=GraphUtils.GraphGenerator.generate_7_type_graphs(num_graphs=5,num_nodes=20)
             test_20_nodes=GraphUtils.GraphGenerator.generate_7_type_graphs(num_graphs=5,num_nodes=20)
             test_50_nodes=GraphUtils.GraphGenerator.generate_7_type_graphs(num_graphs=5,num_nodes=50)
             test_100_nodes=GraphUtils.GraphGenerator.generate_7_type_graphs(num_graphs=5,num_nodes=100)
+            test_500_nodes=GraphUtils.GraphGenerator.generate_7_type_graphs(num_graphs=5,num_nodes=500)
             test_1000_nodes=GraphUtils.GraphGenerator.generate_7_type_graphs(num_graphs=5,num_nodes=1000)
 
             DataUtils.DataLoader.save_to_pickle(data=train_20_nodes,file_name="train_20_nodes",dir_type="graph")
@@ -34,6 +35,7 @@ def app_data(config: dict):
             DataUtils.DataLoader.save_to_pickle(data=test_20_nodes,file_name="test_20_nodes",dir_type="graph")
             DataUtils.DataLoader.save_to_pickle(data=test_50_nodes,file_name="test_50_nodes",dir_type="graph")
             DataUtils.DataLoader.save_to_pickle(data=test_100_nodes,file_name="test_100_nodes",dir_type="graph")
+            DataUtils.DataLoader.save_to_pickle(data=test_500_nodes,file_name="test_500_nodes",dir_type="graph")
             DataUtils.DataLoader.save_to_pickle(data=test_1000_nodes,file_name="test_1000_nodes",dir_type="graph")
         
         case 2:
@@ -80,12 +82,12 @@ def app_data(config: dict):
         case 3:
             """
             App 3.
-            Convert graph algo trajectory to PyG Data and save using pickle (num_nodes: 1000)
+            Convert graph algo trajectory to PyG Data and save using pickle (num_nodes: 500, 1000)
             """
-            graph_list_dict=DataUtils.DataLoader.load_from_pickle(file_name="test_1000_nodes",dir_type="graph")
+            graph_list_dict=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_nodes",dir_type="graph")
             graph_list=graph_list_dict[config['graph_type']]
             data_dict=GraphUtils.GraphProcessor.graph_list_to_data_dict(graph_list=graph_list,graph_type=config['graph_type'])
-            DataUtils.DataLoader.save_data_dict(data_dict=data_dict,graph_type=config['graph_type'],file_name=f"test_1000_{config['graph_type']}",dir_type="test")
+            DataUtils.DataLoader.save_data_dict(data_dict=data_dict,graph_type=config['graph_type'],file_name=f"test_{config['test_num_nodes']}_{config['graph_type']}",dir_type="test")
 
 
 """
@@ -94,11 +96,13 @@ Execute app_data
 parser=argparse.ArgumentParser()
 parser.add_argument("--app_num",type=int,default=0)
 parser.add_argument("--graph_type",type=str,default="ladder")
+parser.add_argument("--test_num_nodes",type=int,default=500)
 args=parser.parse_args()
 
 config={
     "app_num":args.app_num,
-    "graph_type":args.graph_type
+    "graph_type":args.graph_type,
+    "test_num_nodes":args.test_num_nodes
 }
 
 app_data(config=config)
