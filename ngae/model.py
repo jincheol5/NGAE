@@ -89,7 +89,7 @@ class NGAE(nn.Module):
         self.algo_encoder=Encoder(node_dim=node_dim,latent_dim=latent_dim)
         match processor:
             case 'mpnn':
-                self.processor=MPNN_Processor(latent_dim=latent_dim,edge_dim=latent_dim,aggr=aggr)
+                self.processor=MPNN_Processor(latent_dim=latent_dim,edge_dim=edge_dim,aggr=aggr)
             case 'gat':
                 self.processor=GATConv(in_channels=latent_dim,out_channels=latent_dim,edge_dim=edge_dim)
             case 'gatv2':
