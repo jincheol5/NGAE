@@ -86,7 +86,7 @@ def app_data(config: dict):
             """
             graph_list_dict=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_nodes",dir_type="graph")
             graph_list=graph_list_dict[config['graph_type']]
-            data_dict=GraphUtils.GraphProcessor.graph_list_to_data_dict(graph_list=graph_list,graph_type=config['graph_type'])
+            data_dict=GraphUtils.GraphProcessor.graph_list_to_data_dict(graph_list=graph_list,graph_type=config['graph_type'],desc=True)
             DataUtils.DataLoader.save_data_dict(data_dict=data_dict,graph_type=config['graph_type'],file_name=f"test_{config['test_num_nodes']}",dir_type="test")
 
 
