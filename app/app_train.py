@@ -103,6 +103,28 @@ def app_train(config: dict):
             """
             for test_graph_type,test_data_loader in test_data_loader_dict.items():
                 ModelTrainer.test(model=None,graph_type=test_graph_type,data_loader=test_data_loader,config=config)
+        
+        case 3:
+            """
+            App 3. 
+            test algorithm only all type
+            """
+            test_data_list=[]
+            test_data_dict=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_all",dir_type="test")
+            if config['random_src']:
+                for _,src_dict in test_data_dict.items():
+                    random_src_id=random.randrange(20)
+                    test_data_list.append(src_dict[random_src_id])
+            else: # all src
+                for _,src_dict in test_data_dict.items():
+                    for _,data in src_dict.items():
+                        test_data_list.append(data)
+            test_data_loader=DataLoader(dataset=test_data_list,batch_size=1,shuffle=True)
+
+            """
+            model test
+            """
+            ModelTrainer.test(model=None,graph_type='all',data_loader=test_data_loader,config=config)
 
 
 """
