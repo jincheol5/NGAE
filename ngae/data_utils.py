@@ -10,25 +10,24 @@ class DataUtils:
         dataset_path=os.path.join('..','data','ngae')
         @staticmethod
         def save_to_pickle(data,file_name: str,dir_type: Literal['graph','test','train','val']):
-            file_name=file_name+".pkl.gz"
+            file_name=file_name+".pkl"
             file_path=os.path.join(DataUtils.DataLoader.dataset_path,dir_type,file_name)
-            with gzip.open(file_path,'wb') as f:
+            with open(file_path,'wb') as f:
                 pickle.dump(data,f)
-            print(f"Save {file_name} (Compressed with gzip)")
+            print(f"Save {file_name}")
         
         @staticmethod
         def load_from_pickle(file_name: str,dir_type: Literal['graph','test','train','val']):
-            file_name=file_name+".pkl.gz"
+            file_name=file_name+".pkl"
             file_path=os.path.join(DataUtils.DataLoader.dataset_path,dir_type,file_name)
-            with gzip.open(file_path,'rb') as f:
+            with open(file_path,'rb') as f:
                 data=pickle.load(f)
-            print(f"Load {file_name} (Decompressed with gzip)")
+            print(f"Load {file_name}")
             return data
 
         @staticmethod
         def save_data_dict(data_dict: dict,graph_type: str,file_name: str,dir_type: Literal['graph','test','train','val']):
             DataUtils.DataLoader.save_to_pickle(data=data_dict,file_name=file_name+f"_{graph_type}",dir_type=dir_type)
-            print(f"Save {file_name} data_dict")
 
         @staticmethod
         def save_all_data_dict(all_data_dict: dict,file_name: str,dir_type: Literal['graph','test','train','val']):
