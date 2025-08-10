@@ -86,7 +86,7 @@ class NGAE(nn.Module):
     def __init__(self,node_dim,edge_dim,latent_dim,algorithm:Literal['bfs','bf']='bfs',processor:Literal['mpnn','gat','gatv2']='mpnn',aggr:Literal['max','sum','mean']='max'):
         super().__init__()
         self.algorithm=algorithm
-        self.algo_encoder=Encoder(input_dim=node_dim,latent_dim=latent_dim)
+        self.algo_encoder=Encoder(node_dim=node_dim,latent_dim=latent_dim)
         match processor:
             case 'mpnn':
                 self.processor=MPNN_Processor(latent_dim=latent_dim,edge_dim=latent_dim,aggr=aggr)
@@ -103,7 +103,7 @@ class NGAE(nn.Module):
         pred_edge_score_list=[]
         pred_tau_list=[]
 
-        seq_len,num_nodes,_=algo_trajectory.size()
+        seq_len,_,_=algo_trajectory.size()
         pre_h=h_0
         algo=algo_trajectory[0]
         for i in range(seq_len-1):
