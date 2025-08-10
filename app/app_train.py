@@ -27,7 +27,7 @@ def app_train(config: dict):
             train algorithm trajectory
             """
             if config['wandb']:
-                wandb.init(project="CLRS",name=f"{config['algorithm']}")
+                wandb.init(project="NGAE",name=f"{config['algorithm']}")
                 wandb.config.update(config)
 
             """
