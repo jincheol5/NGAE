@@ -87,14 +87,9 @@ def app_train(config: dict):
             for graph_type in graph_type_list:
                 test_data_list=[]
                 test_data_dict=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_{graph_type}",dir_type="test")
-                if config['random_src']:
-                    for _,src_dict in test_data_dict.items():
-                        random_src_id=random.randrange(20)
-                        test_data_list.append(src_dict[random_src_id])
-                else: # all src
-                    for _,src_dict in test_data_dict.items():
-                        for _,data in src_dict.items():
-                            test_data_list.append(data)
+                for _,src_dict in test_data_dict.items():
+                    for _,data in src_dict.items():
+                        test_data_list.append(data)
                 test_data_loader=DataLoader(dataset=test_data_list,batch_size=1,shuffle=True)
                 test_data_loader_dict[graph_type]=test_data_loader
 
@@ -111,14 +106,9 @@ def app_train(config: dict):
             """
             test_data_list=[]
             test_data_dict=DataUtils.DataLoader.load_from_pickle(file_name=f"test_{config['test_num_nodes']}_all",dir_type="test")
-            if config['random_src']:
-                for _,src_dict in test_data_dict.items():
-                    random_src_id=random.randrange(20)
-                    test_data_list.append(src_dict[random_src_id])
-            else: # all src
-                for _,src_dict in test_data_dict.items():
-                    for _,data in src_dict.items():
-                        test_data_list.append(data)
+            for _,src_dict in test_data_dict.items():
+                for _,data in src_dict.items():
+                    test_data_list.append(data)
             test_data_loader=DataLoader(dataset=test_data_list,batch_size=1,shuffle=True)
 
             """
