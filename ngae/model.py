@@ -23,7 +23,7 @@ class Decoder(nn.Module):
         self.linear=nn.Linear(in_features=2*latent_dim,out_features=1)
     def forward(self,z,h):
         x=torch.cat([z,h],dim=-1) 
-        y=self.linear()
+        y=self.linear(x)
         return y
 
 class Predecessor_Decoder(nn.Module):
