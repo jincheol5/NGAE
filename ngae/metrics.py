@@ -4,7 +4,6 @@ import torch
 import torch.nn.functional as F
 import torch_scatter
 from typing_extensions import Literal
-from torcheval.metrics import BinaryAUROC
 from .model_train_utils import ModelTrainUtils
 
 class Metrics:

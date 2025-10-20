@@ -63,35 +63,6 @@ class ModelTrainUtils:
             offset_value=num_nodes*i
             p[num_nodes*i:num_nodes*(i+1)]=p[num_nodes*i:num_nodes*(i+1)]+offset_value
         return p 
-    
-    @staticmethod
-    def re_offset_p(p:torch.Tensor, num_nodes:int, mask:torch.Tensor):
-        """
-        Input:
-            p: [sub_N,1], long tensor (offset된 상태)
-            num_nodes: int
-        Output:
-            restored_p: [N,1], long tensor (offset 이전 상태)
-        """
-        sub_len=p.size(0)//num_nodes
-        for i in range(sub_len):
-            offset_value=num_nodes*i
-            p[num_nodes*i:num_nodes*(i+1)]=p[num_nodes*i:num_nodes*(i+1)]-offset_value
-        return p
-
-    @staticmethod
-    def convert_p_to_edge_p(p:torch.Tensor, edge_index:torch.Tensor):
-        """
-        Input:
-            p: [N,1], long tensor
-            edge_index: [2,E]
-        Output:
-            edge_p: [E,1]
-        """
-        p=p.squeeze(-1)
-        src,tar=edge_index
-        edge_p=(p[tar]==src).float().unsqueeze(1)
-        return edge_p # [E,1]
 
     @staticmethod
     def restore_output(output:torch.Tensor, mask:torch.Tensor, feature_dim:int=1):
