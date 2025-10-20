@@ -1,171 +1,249 @@
+import math
 import numpy as np
 import torch
 import torch.nn.functional as F
+import torch_scatter
+from typing_extensions import Literal
+from torcheval.metrics import BinaryAUROC
 from .model_train_utils import ModelTrainUtils
-
 
 class Metrics:
     @staticmethod
-    def compute_r_seq_loss(logit: torch.Tensor,label: torch.Tensor):
+    def compute_algo_step_loss(logit:torch.Tensor, label:torch.Tensor, mask:torch.Tensor, num_nodes:int, algo_type:Literal['bfs','bf']='bfs'):
         """
         Input:
-            -logit: [seq_len-1,N,1]
-            -label: [seq_len-1,N,1]
+            logit: [sub_B*N,1]
+            label: [B*N,1]
+            mask: [B*N,]
+            num_nodes: int
+            algo_type: bfs or bf
         Output:
-            -loss scalar tensor: [] (0차원)
+            loss scalar tensor: [] (0차원)
         """
-        return F.binary_cross_entropy_with_logits(input=logit,target=label,reduction='mean')
+        sub_batch_size=logit.size(0)//num_nodes
+        logit=logit.view(sub_batch_size,num_nodes,1).squeeze(-1) # [sub_B,N]
+        label=label[mask] # [sub_B*N,1]
+        label=label.view(sub_batch_size,num_nodes,1).squeeze(-1) # [sub_B,N]
+        match algo_type:
+            case 'bfs':
+                loss_per_subgraph=F.binary_cross_entropy_with_logits(logit,label,reduction='none').mean(dim=1) # [sub_B,]
+            case 'bf':
+                loss_per_subgraph=F.mse_loss(logit,label,reduction='none').mean(dim=1) # [sub_B,]
+        loss=loss_per_subgraph.mean()
+        return loss
 
     @staticmethod
-    def compute_d_seq_loss(logit: torch.Tensor, label: torch.Tensor):
+    def compute_algo_seq_loss(logit:list, label:torch.Tensor, mask:torch.Tensor, num_nodes:int, algo_type:Literal['bfs','bf']='bfs'):
         """
         Input:
-            -logit: [seq_len-1,N,1]
-            -label: [seq_len-1,N,1]
+            logit: List of [sub_B*N,1]
+            label: [max_seq_len-1,B*N,1]
+            mask: [max_seq_len-1,B*N,1]
+            num_nodes: int 
+            algo_type: bfs or bf
         Output:
-            -loss scalar tensor: [] (0차원)
+            loss scalar tensor: [] (0차원)
         """
-        return F.mse_loss(input=logit,target=label,reduction='mean')
-
-    @staticmethod
-    def compute_predecessor_loss(logit: torch.Tensor,label: torch.Tensor,edge_index: torch.Tensor):
-        """
-        Input:
-            -logit: [E,1]
-            -label: [N,1]
-            -edge_index: [2,E]
-        Output:
-            -loss scalar tensor: [] (0차원)
-        
-        Custom cross entropy
-        """
-        scores=logit.view(-1) # [E,]
-        dst=edge_index[1] # [E,]
-        num_nodes,_=label.size() 
-
-        # 노드별로 LogSumExp 계산
-        m_i=torch.zeros(num_nodes,device=scores.device).scatter_reduce(dim=0,index=dst,src=scores,reduce="amax") # [N,], 각 노드로 들어오는 edge 중 최대 logit m_i
-        exp_norm=torch.exp(scores-m_i[dst]) # [E,]
-        sum_exp=torch.zeros_like(m_i).scatter_add_(0,dst,exp_norm) # [N,], 정규화 지수 합
-        lse=m_i+torch.log(sum_exp) # [N,], LogSumExp
-
-        # 정답 edge logit 추출, "전체 E개 엣지에서 몇 번째인지" 반환해 올바른 logit 추출
-        counts=torch.zeros(num_nodes,dtype=torch.long,device=scores.device).scatter_add_(0,dst,torch.ones_like(dst)) # [N,], 노드별로 들어오는 edge 개수
-        offsets=torch.cat([torch.zeros(1,dtype=torch.long,device=scores.device),counts.cumsum(0)[:-1]],dim=0) # [N,], offsets=node i 이전에 등장한(index가 작은) 모든 edge 개수 누적
-
-        label_abs=offsets+label.view(-1) # [N,]
-        true_scores=scores[label_abs] # [N,]
-        return (lse-true_scores).sum()
-
-    @staticmethod
-    def compute_predecessor_seq_loss(logit: torch.Tensor,label: torch.Tensor,edge_index: torch.Tensor):
-        """
-        Input:
-            -logit: [seq_len-1,E,1]
-            -label: [seq_len-1,N,1]
-            -edge_index: [2,E]
-        Output:
-            -loss scalar tensor: [] (0차원)
-        """
-        seq_len,_,_=label.size()
-        losses=[Metrics.compute_predecessor_loss(logit=logit[i],label=label[i],edge_index=edge_index) for i in range(seq_len)]
+        seq_len=label.size(0)
+        losses=[]
+        for step in range(seq_len):
+            step_logit=logit[step] # [sub_B*N,1]
+            step_label=label[step] # [B*N,1]
+            step_mask=mask[step].squeeze(-1) # [B*N,]
+            step_loss=Metrics.compute_algo_step_loss(logit=step_logit,label=step_label,mask=step_mask,num_nodes=num_nodes,algo_type=algo_type)
+            losses.append(step_loss)
         return torch.stack(losses).mean()
 
     @staticmethod
-    def compute_tau_seq_loss(logit: torch.Tensor,label: torch.Tensor):
+    def compute_p_step_loss(logit:torch.Tensor, label:torch.Tensor, mask:torch.Tensor, edge_index:torch.Tensor, num_nodes:int):
         """
         Input:
-            -logit: [seq_len-1,1]
-            -label: [seq_len-1,1]
+            logit (edge_score): [sub_E,1]
+            label: [B*N,1]
+            mask: [B*N,]
+            edge_index: [2,sub_E]
+            num_nodes: int
         Output:
-            -loss scalar tensor: [] (0차원)
+            loss scalar tensor: [] (0차원)
         """
+        label=label[mask] # [sub_B*N,1]
+        updated_label=ModelTrainUtils.offset_p(p=label,num_nodes=num_nodes).squeeze(-1) # [sub_B*N,]
+
+        src,tar=edge_index
+        logit=logit.squeeze(-1)
+        log_denom=torch_scatter.scatter_logsumexp(src=logit,index=tar,dim=0,dim_size=updated_label.size(0)) # [sub_B*N,]
+        log_probs=logit-log_denom[tar] # [sub_E,]
+        correct_edge_mask=(src==updated_label[tar])
+        loss=-log_probs[correct_edge_mask].mean()
+        return loss
+
+
+    @staticmethod
+    def compute_p_seq_loss(logit:list, label:torch.Tensor, mask:torch.Tensor, edge_index_list:list, num_nodes:int):
+        """
+        Input:
+            logit: List of [sub_E,1]
+            label: [max_seq_len-1,B*N,1]
+            mask: [max_seq_len-1,B*N,1]
+            edge_index_list: List of sub_edge_index
+            num_nodes: int 
+        Output:
+            loss scalar tensor: [] (0차원)
+        """
+        seq_len=label.size(0)
+        losses=[]
+        for step in range(seq_len):
+            step_logit=logit[step] # [sub_E,1]
+            step_label=label[step] # [B*N,1]
+            step_mask=mask[step].squeeze(-1) # [B*N,]
+            step_loss=Metrics.compute_p_step_loss(logit=step_logit,label=step_label,mask=step_mask,edge_index=edge_index_list[step],num_nodes=num_nodes)
+            losses.append(step_loss)
+        return torch.stack(losses).mean()
+    
+    @staticmethod
+    def compute_tau_step_loss(logit:torch.Tensor, label:torch.Tensor, mask:torch.Tensor):
+        """
+        Input:
+            logit: [sub_B,]
+            label: [B,]
+            mask: [B,]
+        Output:
+            loss scalar tensor: [] (0차원)
+        """
+        label=label[mask] # [sub_B,]
         return F.binary_cross_entropy_with_logits(input=logit,target=label,reduction='mean')
 
     @staticmethod
-    def compute_r_acc(logit: torch.Tensor,label: torch.Tensor):
+    def compute_tau_seq_loss(logit:list ,label:torch.Tensor, mask:torch.Tensor):
         """
         Input:
-            -logit: [N,1]
-            -label: [N,1]
+            logit: List of [sub_B,]
+            label: [max_seq_len-1,B]
+            mask: [max_seq_len-1,B]
         Output:
-            -acc
+            loss scalar tensor: [] (0차원)
         """
-        num_nodes,_=logit.size()
-        prob=F.sigmoid(logit)
-        pred=(prob>=0.5).float() 
-        correct=(pred==label).sum().item()
-        return float(correct)/num_nodes
+        seq_len=label.size(0)
+        losses=[]
+        for step in range(seq_len):
+            step_logit=logit[step] # [sub_B,]
+            step_label=label[step] # [B,]
+            step_mask=mask[step] # [B,]
+            step_loss=Metrics.compute_tau_step_loss(logit=step_logit,label=step_label,mask=step_mask)
+            losses.append(step_loss)
+        return torch.stack(losses).mean()
 
     @staticmethod
-    def compute_r_seq_acc(logit: torch.Tensor,label: torch.Tensor):
+    def compute_r_step_acc(logit:torch.Tensor, label:torch.Tensor, mask:torch.Tensor, num_nodes:int):
         """
         Input:
-            -logit: [seq_len-1,N,1]
-            -label: [seq_len-1,N,1]
+            logit: [sub_B*N,1]
+            label: [B*N,1]
+            mask: [B*N,]
+            num_nodes: int
         Output:
-            -step_acc
-            -last_acc
+            acc
         """
-        seq_len,_,_=label.size()
-        step_acc_list=[]
-        for i in range(seq_len):
-            step_acc=Metrics.compute_r_acc(logit=logit[i],label=label[i])
-            step_acc_list.append(step_acc)
-        last_acc=step_acc_list[-1]
-        step_acc=np.mean(step_acc_list)
+        label=label[mask] # [sub_B*N,1]
+        prob=F.sigmoid(logit) # [sub_B*N,1]
+        pred=(prob>=0.5).float() # [sub_B*N,1]
+        correct=(pred==label).float() # [sub_B*N,1]
+        correct=correct.view(-1,num_nodes,1) # [sub_B,N,1]
+        acc_per_subgraph=correct.mean(dim=1) # [sub_B,1]
+        acc=acc_per_subgraph.mean().item()
+        return acc 
+
+    @staticmethod
+    def compute_r_seq_acc(logit:list, label:torch.Tensor, mask:torch.Tensor, num_nodes:int):
+        """
+        Input:
+            logit: List of [sub_B*N,1]
+            label: [max_seq_len-1,B*N,1]
+            mask: [max_seq_len-1,B*N,1]
+            num_nodes: int
+        Output:
+            step_acc
+            last_acc
+        """
+        seq_len=label.size(0)
+        acc_list=[]
+        for step in range(seq_len):
+            step_logit=logit[step] # [sub_B,]
+            step_label=label[step] # [B,]
+            step_mask=mask[step].squeeze(-1) # [B,]
+            step_acc=Metrics.compute_r_step_acc(logit=step_logit,label=step_label,mask=step_mask,num_nodes=num_nodes)
+            acc_list.append(step_acc)
+        step_acc=np.mean(acc_list)
+        last_acc=acc_list[-1]
         return step_acc,last_acc
 
     @staticmethod
-    def compute_predecessor_acc(logit: torch.Tensor,label: torch.Tensor,edge_index: torch.Tensor):
+    def compute_p_step_acc(logit:torch.Tensor, label:torch.Tensor, mask:torch.Tensor, edge_index:torch.Tensor, num_nodes:int):
         """
         Input:
-            -logit: [E,1] edge_score tensor
-            -label: [N,1] p tensor
+            logit (edge_score): [sub_E,1]
+            label: [B*N,1]
+            mask: [B*N,]
+            edge_index: [2,sub_E]
+            num_nodes: int
+        Output:
+            acc
         """
-        num_nodes=label.size(0)
-        softmax_one_hot_p=ModelTrainUtils.convert_edge_score_to_softmax_one_hot_p(edge_score=logit,edge_index=edge_index,num_nodes=num_nodes) # [N,N,1]
-        softmax_one_hot_p=softmax_one_hot_p.squeeze(-1) # [N,N]
-        pred_p=softmax_one_hot_p.argmax(dim=1,keepdim=True) # [N,1], LongTensor
-        correct=(pred_p==label).sum().item()
-        acc=float(correct)/num_nodes
+        label=label[mask] # [sub_B*N,1]
+        updated_label=ModelTrainUtils.offset_p(p=label,num_nodes=num_nodes) # [sub_B*N,1]
+        pred=ModelTrainUtils.compute_p_from_logit(logit=logit,edge_index=edge_index,num_nodes=updated_label.size(0)) # [sub_B*N,1] 
+        correct=(pred==updated_label).float() # [sub_B*N,1]
+        correct=correct.view(-1,num_nodes,1) # [sub_B,N,1]
+        acc_per_subgraph=correct.mean(dim=1) # [sub_B,1]
+        acc=acc_per_subgraph.mean().item()
         return acc
 
     @staticmethod
-    def compute_predecessor_seq_acc(logit: torch.Tensor,label: torch.Tensor,edge_index: torch.Tensor):
+    def compute_p_seq_acc(logit:list, label:torch.Tensor, mask:torch.Tensor, edge_index_list:torch.Tensor, num_nodes:int):
         """
         Input:
-            -logit: [seq_len-1,E,1] edge_score seq tensor
-            -label: [seq_len-1,N,1] p seq tensor
-            -edge_index: [2,E]
+            logit: List of [B*N,1]
+            label: [max_seq_len-1,B*N,1]
+            mask: [max_seq_len-1,B*N,1]
+            edge_index_list: List of sub_edge_index
+            num_nodes: int
         Output:
-            -step_acc
-            -last_acc
+            step_acc
+            last_acc
         """
-        seq_len,_,_=label.size()
-        step_acc_list=[]
-        for i in range(seq_len):
-            step_acc=Metrics.compute_predecessor_acc(logit=logit[i],label=label[i],edge_index=edge_index)
-            step_acc_list.append(step_acc)
-        last_acc=step_acc_list[-1]
-        step_acc=np.mean(step_acc_list)
+        seq_len=label.size(0)
+        acc_list=[]
+        for step in range(seq_len):
+            step_logit=logit[step] # [sub_B,]
+            step_label=label[step] # [B,]
+            step_mask=mask[step].squeeze(-1) # [B,]
+            step_acc=Metrics.compute_p_step_acc(logit=step_logit,label=step_label,mask=step_mask,edge_index=edge_index_list[step],num_nodes=num_nodes)
+            acc_list.append(step_acc)
+        step_acc=np.mean(acc_list)
+        last_acc=acc_list[-1]
         return step_acc,last_acc
-    
+
     @staticmethod
-    def compute_tau_seq_acc(logit: torch.Tensor,label: torch.Tensor):
+    def compute_tau_seq_acc(logit:list, label:torch.Tensor, mask:torch.Tensor):
         """
         Input:
-            -logit: [seq_len-1,1]
-            -label: [seq_len-1,1]
+            logit: List of [sub_B]
+            label: [max_seq_len-1,B]
+            mask: [max_seq_len-1,B]
         Output:
-            -step_acc
-            -last_acc
+            step_acc
+            last_acc
         """
-        seq_len,_=logit.size()
-        prob=F.sigmoid(logit)
-        pred=(prob>0.5).float()  
-        correct=(pred==label).sum().item()
-        step_acc=float(correct)/seq_len
-        last_tau=pred[-1,0].item()
-        last_acc=1.0 if last_tau==0.0 else 0.0
+        seq_len=label.size(0)
+        acc_list=[]
+        for step in range(seq_len):
+            step_label=label[step] # [B,]
+            step_mask=mask[step] # [B,]
+            prob=torch.sigmoid(logit[step]) # [sub_B,] 
+            pred=(prob>=0.5).float() # [sub_B,]
+            step_label=step_label[step_mask] # [sub_B,]
+            step_acc=(pred==step_label).float().mean().item()
+            acc_list.append(step_acc)
+        step_acc=np.mean(acc_list)
+        last_acc=acc_list[-1]
         return step_acc,last_acc

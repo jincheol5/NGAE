@@ -1,6 +1,5 @@
 import os
 import pickle
-import gzip
 import torch
 from tqdm import tqdm
 from typing_extensions import Literal
@@ -9,7 +8,7 @@ class DataUtils:
     class DataLoader:
         dataset_path=os.path.join('..','data','ngae')
         @staticmethod
-        def save_to_pickle(data,file_name: str,dir_type: Literal['graph','test','train','val']):
+        def save_to_pickle(data, file_name:str, dir_type:Literal['graph','train','val','test']):
             file_name=file_name+".pkl"
             file_path=os.path.join(DataUtils.DataLoader.dataset_path,dir_type,file_name)
             with open(file_path,'wb') as f:
@@ -17,7 +16,7 @@ class DataUtils:
             print(f"Save {file_name}")
         
         @staticmethod
-        def load_from_pickle(file_name: str,dir_type: Literal['graph','test','train','val']):
+        def load_from_pickle(file_name:str, dir_type:Literal['graph','train','val','test']):
             file_name=file_name+".pkl"
             file_path=os.path.join(DataUtils.DataLoader.dataset_path,dir_type,file_name)
             with open(file_path,'rb') as f:
@@ -26,15 +25,14 @@ class DataUtils:
             return data
 
         @staticmethod
-        def save_data_dict(data_dict: dict,graph_type: str,file_name: str,dir_type: Literal['graph','test','train','val']):
-            DataUtils.DataLoader.save_to_pickle(data=data_dict,file_name=file_name+f"_{graph_type}",dir_type=dir_type)
+        def save_data_dict(data_dict:dict, file_name:str, dir_type:Literal['graph','train','val','test']):
+            DataUtils.DataLoader.save_to_pickle(data=data_dict,file_name=file_name,dir_type=dir_type)
+            print(f"Save {file_name} data_dict")
 
         @staticmethod
-        def save_all_data_dict(all_data_dict: dict,file_name: str,dir_type: Literal['graph','test','train','val']):
+        def save_all_data_dict(all_data_dict:dict, file_name:str, dir_type:Literal['graph','train','val','test']):
             for key,value in tqdm(all_data_dict.items(),desc=f"Save {file_name} all_data_dict..."):
                 match key:
-                    case 'all':
-                        DataUtils.DataLoader.save_to_pickle(data=value,file_name=file_name+"_all",dir_type=dir_type)
                     case 'ladder':
                         DataUtils.DataLoader.save_to_pickle(data=value,file_name=file_name+"_ladder",dir_type=dir_type)
                     case 'grid':
@@ -51,14 +49,14 @@ class DataUtils:
                         DataUtils.DataLoader.save_to_pickle(data=value,file_name=file_name+"_caveman",dir_type=dir_type)
 
         @staticmethod
-        def save_model_parameter(model,model_name="NGAE"):
+        def save_model_parameter(model, model_name="CLRS"):
             file_name=model_name+".pt"
             file_path=os.path.join(DataUtils.DataLoader.dataset_path,"inference",file_name)
             torch.save(model.state_dict(),file_path)
             print(f"Save {model_name} model parameter")
         
         @staticmethod
-        def load_model_parameter(model,model_name="NGAE"):
+        def load_model_parameter(model, model_name="CLRS"):
             file_name=model_name+".pt"
             file_path=os.path.join(DataUtils.DataLoader.dataset_path,"inference",file_name)
             model.load_state_dict(torch.load(file_path))
