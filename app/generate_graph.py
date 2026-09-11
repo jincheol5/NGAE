@@ -21,11 +21,11 @@ def main():
     test_50=GraphGenerator.generate_7_type_graphs(n_graph=5,n_node=50)
     test_100=GraphGenerator.generate_7_type_graphs(n_graph=5,n_node=100)
 
-    DataUtils.save_to_pickle(data=train_20,file_name=f"train_20",dir_type=f"graph")
-    DataUtils.save_to_pickle(data=val_20,file_name=f"val_20",dir_type=f"graph")
-    DataUtils.save_to_pickle(data=test_20,file_name=f"test_20",dir_type=f"graph")
-    DataUtils.save_to_pickle(data=test_50,file_name=f"test_50",dir_type=f"graph")
-    DataUtils.save_to_pickle(data=test_100,file_name=f"test_100",dir_type=f"graph")
+    DataUtils.save_to_pickle(data=train_20,file_name=f"graph_train_20",dir_type=f"graph")
+    DataUtils.save_to_pickle(data=val_20,file_name=f"graph_val_20",dir_type=f"graph")
+    DataUtils.save_to_pickle(data=test_20,file_name=f"graph_test_20",dir_type=f"graph")
+    DataUtils.save_to_pickle(data=test_50,file_name=f"graph_test_50",dir_type=f"graph")
+    DataUtils.save_to_pickle(data=test_100,file_name=f"graph_test_100",dir_type=f"graph")
 
 if __name__=="__main__":
     """
