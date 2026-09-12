@@ -69,7 +69,7 @@ class TrajUtils:
         ### Convert to PyG Data
         # get edge_index, edge_attr
         edge_index=GraphUtils.get_edge_index_tensor(graph=graph)
-        edge_attr=GraphUtils.get_edge_weight_tensor(graph=graph)
+        edge_attr=GraphUtils.get_edge_weight_tensor(graph=graph,edge_index=edge_index)
 
         # Init PyG Data
         data=Data(
@@ -87,8 +87,6 @@ class TrajUtils:
         data.r=torch.stack(r_traj_list,dim=0) # [len_bfs_traj,N]
         data.d=torch.stack(d_traj_list,dim=0) # [len_bf_traj,N]
         data.p=torch.stack(p_traj_list,dim=0) # [len_bf_traj,N]
-        data.bfs_tau=torch.cat([torch.ones(len(r_traj_list)-1,),torch.zeros(1,)],dim=0) # [len_bfs_traj,]
-        data.bf_tau=torch.cat([torch.ones(len(p_traj_list)-1,),torch.zeros(1,)],dim=0) # [len_bf_traj,]
         return data
 
     @staticmethod
@@ -112,7 +110,11 @@ class TrajUtils:
             graph_data_list: List[List[PyG Data]]
         """
         graph_data_list=[]
-        for graph_id,graph in tqdm(enumerate(graph_list),desc=f"Convert to graph_data_list..."):
+        for graph_id,graph in tqdm(
+                enumerate(graph_list),
+                total=len(graph_list),
+                desc=f"Convert to graph_data_list..."
+            ):
             graph_data=[]
             for src in graph.nodes():
                 src_data=TrajUtils._compute_traj(

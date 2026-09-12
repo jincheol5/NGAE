@@ -37,24 +37,19 @@ class GraphUtils:
             state:Literal["r","d","p"]
         ):
         match state:
-            case "r"|"d":
-                state_array=np.array(
-                    [
-                        graph.nodes[node_id][state] 
-                        for node_id in range(graph.number_of_nodes())
-                    ],
-                    dtype=np.float32
-                )
-                state_tensor=torch.tensor(state_array,dtype=torch.float32)
+            case "r":
+                tensor_dtype=torch.bool
+            case "d":
+                tensor_dtype=torch.float32
             case "p":
-                state_array=np.array(
-                    [
-                        graph.nodes[node_id][state] 
-                        for node_id in range(graph.number_of_nodes())
-                    ],
-                    dtype=np.long
-                )
-                state_tensor=torch.tensor(state_array,dtype=torch.long)
+                tensor_dtype=torch.int16
+        state_tensor=torch.tensor(
+            [
+                graph.nodes[node_id][state] 
+                for node_id in range(graph.number_of_nodes())
+            ],
+            dtype=tensor_dtype
+        )
         return state_tensor
 
     @staticmethod

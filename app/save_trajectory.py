@@ -7,7 +7,7 @@ def main(**kwargs):
     graph_type=kwargs["graph_type"]
 
     # get graph_list
-    graph_file_name=f"{mode}_{n_node}"
+    graph_file_name=f"graph_{mode}_{n_node}"
     graph_list_dict=DataUtils.load_pickle(file_name=graph_file_name,dir_type=f"graph")
     graph_list=graph_list_dict[graph_type]
 
@@ -60,8 +60,8 @@ if __name__=="__main__":
     )
     args=parser.parse_args()
     app_config={
-        "mode":args.app_num,
-        "n_node":args.dataset_name,
-        "graph_type":args.sampling
+        "mode":args.mode,
+        "n_node":args.n_node,
+        "graph_type":args.graph_type
     }
     main(**app_config)

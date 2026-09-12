@@ -42,14 +42,30 @@ class GraphUtils:
         @staticmethod
         def get_node_attr_tensor(graph:nx.DiGraph, attr:str='x'):
             match attr:
-                case 'r'|'d':
-                    attr_array=np.array([graph.nodes[node_id][attr] for node_id in range(graph.number_of_nodes())],dtype=np.float32)
-                    attr_tensor=torch.tensor(attr_array,dtype=torch.float32)
-                    attr_tensor=attr_tensor.unsqueeze(-1)
-                case 'p':
-                    attr_array=np.array([graph.nodes[node_id][attr] for node_id in range(graph.number_of_nodes())],dtype=np.int64)
-                    attr_tensor=torch.tensor(attr_array,dtype=torch.int64)
-                    attr_tensor=attr_tensor.unsqueeze(-1)
+                case "r":
+                    attr_tensor=torch.tensor(
+                        [
+                            graph.nodes[node_id][attr]
+                            for node_id in range(graph.number_of_nodes())
+                        ],
+                        dtype=torch.bool
+                    )
+                case "d":
+                    attr_tensor=torch.tensor(
+                        [
+                            graph.nodes[node_id][attr]
+                            for node_id in range(graph.number_of_nodes())
+                        ],
+                        dtype=torch.float32
+                    )
+                case "p":
+                    attr_tensor=torch.tensor(
+                        [
+                            graph.nodes[node_id][attr]
+                            for node_id in range(graph.number_of_nodes())
+                        ],
+                        dtype=torch.int16
+                    )
             return attr_tensor
 
         @staticmethod
