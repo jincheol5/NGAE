@@ -116,7 +116,7 @@ class TrajUtils:
                 desc=f"Convert to graph_data_list..."
             ):
             graph_data=[]
-            for src in graph.nodes():
+            for src in range(graph.number_of_nodes()):
                 src_data=TrajUtils._compute_traj(
                     graph=graph,
                     source=src,

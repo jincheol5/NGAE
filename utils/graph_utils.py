@@ -14,7 +14,7 @@ class GraphUtils:
     @staticmethod
     def set_edge_weight(graph:nx.Graph):
         for edge in graph.edges():
-            graph.edges[edge]["w"]=np.float32(random.uniform(0.1,1.0))
+            graph.edges[edge]["w"]=np.float32(random.uniform(0.2,1.0))
 
     @staticmethod
     def init_node_state(

@@ -1,3 +1,5 @@
+import random
+import numpy as np
 import torch
 import torch.nn.functional as F
 from torch_geometric.data import Data,Batch
@@ -87,6 +89,34 @@ class TrainUtils:
         return batch
 
     @staticmethod
+    def sampling_k_source_traj_per_graph(
+            graph_data_list_dict:dict[str,list[list[Data]]],
+            k:int=1
+        )->list[Data]:
+        """
+        각 graph마다 source trajectory를 최대 k개 랜덤 샘플링
+
+        Input:
+            graph_data_list_dict: dict
+                graph_type: str
+                graph_data_list: list
+                    graph_data: list
+                        src_data: PyG Data
+        Return:
+            sampled_data_list: list of PyG Data
+        """
+        sampled_data_list=[]
+        for _,graph_data_list in graph_data_list_dict.items():
+            for graph_data in graph_data_list:
+                n_sample=min(k,len(graph_data))
+                sampled_data=random.sample(
+                    graph_data,
+                    k=n_sample
+                )
+                sampled_data_list.extend(sampled_data)
+        return sampled_data_list
+
+    @staticmethod
     def compute_reachability_loss(
             r_traj:torch.Tensor,
             pred_r_traj:torch.Tensor,
@@ -112,6 +142,83 @@ class TrainUtils:
         # valid trajectory에 대해서만 BCE loss 계산
         loss=F.binary_cross_entropy_with_logits(
             pred_r_traj[valid_mask],
-            label_r_traj[valid_mask].float()
+            label_r_traj[valid_mask]
         )
         return loss
+
+    @staticmethod
+    def compute_distance_loss(
+            d_traj: torch.Tensor,
+            pred_d_traj: torch.Tensor,
+            bf_mask: torch.Tensor
+        ):
+        """
+        현재 state와 다음 state가 둘 다 실제 데이터에 존재하는 transition만 loss에 포함
+
+        Input:
+            d_traj: [B,max_bf_len,N]
+            pred_d_traj: [B,max_bf_len-1,N]
+            bf_mask: [B,max_bf_len]
+        """
+        # get label
+        label_d_traj=d_traj[:,1:] # [B,max_bf_len-1,N]
+
+        # 현재 step과 다음 step이 모두 존재하는 transition만 사용
+        valid_mask=(bf_mask[:,:-1] & bf_mask[:,1:]) # [B,max_bf_len-1]
+
+        # graph-level step mask -> node-level mask
+        valid_mask=valid_mask.unsqueeze(-1).expand_as(label_d_traj) # [B,max_bf_len-1,N]
+
+        # valid trajectory에 대해서만 MSE loss 계산
+        loss=F.mse_loss(
+            pred_d_traj[valid_mask],
+            label_d_traj[valid_mask]
+        )
+        return loss
+
+class EarlyStopper:
+    def __init__(self,
+            patience:int=1
+        ):
+        self.patience=patience
+        self.patience_count=0
+        self.best_loss=np.inf
+        self.best_state=None
+        self.early_stop=False
+    def __call__(self,
+            val_loss:float,
+            model:torch.nn.Module
+        ):
+        # val_loss가 NaN, Inf이면 즉시 early stop
+        if not np.isfinite(val_loss): 
+            print("Loss is NaN or Inf!")
+            self.early_stop=True
+            if self.best_state is not None:
+                model.load_state_dict(self.best_state)
+            return model
+
+        # 첫 번째 validation에서는 비교할 이전 best가 없으므로 현재 loss와 모델을 그대로 best로 저장
+        if self.best_state is None: 
+            self.best_loss=val_loss
+            self.best_state={
+                key: value.detach().clone()
+                for key,value in model.state_dict().items()
+            }
+            return model
+
+        # val_loss가 개선 되지 않은 경우
+        if self.best_loss<=val_loss: 
+            self.patience_count+=1
+            if self.patience<=self.patience_count:
+                self.early_stop=True
+                model.load_state_dict(self.best_state)
+            return model
+
+        # val_loss가 개선 된 경우
+        self.patience_count=0
+        self.best_loss=val_loss
+        self.best_state={
+            key: value.detach().clone()
+            for key, value in model.state_dict().items()
+        }
+        return model
