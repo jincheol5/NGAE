@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 from torch_geometric.data import Data
 from utils import TrainUtils,Metric,EarlyStopper
 
-class ModelTrainer:
+class BFTrainer:
     @staticmethod
     def train(
             model:nn.Module,
@@ -60,28 +60,40 @@ class ModelTrainer:
             model.train()
             for batch_data in tqdm(train_loader,desc=f"Training epoch {epoch+1}..."):
                 ### get batch data
-                r_traj=batch_data.r
+                d_traj=batch_data.d
+                p_traj=batch_data.p
                 edge_index=batch_data.edge_index
                 edge_attr=batch_data.edge_attr
-                bfs_mask=batch_data.bfs_mask
-                r_traj=r_traj.to(device)
+                bf_mask=batch_data.bf_mask
+                d_traj=d_traj.to(device)
+                p_traj=p_traj.to(device)
                 edge_index=edge_index.to(device)
                 edge_attr=edge_attr.to(device)
-                bfs_mask=bfs_mask.to(device)
+                bf_mask=bf_mask.to(device)
 
                 ### Forward
-                pred_r_traj=model(
-                    r_traj=r_traj,
+                pred_result=model(
+                    d_traj=d_traj,
                     edge_index=edge_index,
-                    edge_attr=edge_attr
+                    edge_attr=edge_attr,
+                    mode="train"
                 )
+                pred_d_traj=pred_result["distance"] # [B,max_bf_len-1,N]
+                edge_score_traj=pred_result["edge_score"] # [E,max_bf_len-1,1]
 
                 ### Loss
-                loss=TrainUtils.compute_reachability_loss(
-                    r_traj=r_traj,
-                    pred_r_traj=pred_r_traj,
-                    bfs_mask=bfs_mask
+                distance_loss=TrainUtils.compute_distance_loss(
+                    d_traj=d_traj,
+                    pred_d_traj=pred_d_traj,
+                    bf_mask=bf_mask
                 )
+                predecessor_loss=TrainUtils.compute_predecessor_loss(
+                    p_traj=p_traj,
+                    edge_score_traj=edge_score_traj,
+                    edge_index=edge_index,
+                    bf_mask=bf_mask
+                )
+                loss=distance_loss+predecessor_loss
 
                 ### Backward
                 optimizer.zero_grad()
@@ -91,7 +103,7 @@ class ModelTrainer:
             """
             Validate model
             """
-            val_result=ModelTrainer.validate(
+            val_result=BFTrainer.validate(
                 model=model,
                 val_loader=val_loader,
                 **kwargs
@@ -141,38 +153,108 @@ class ModelTrainer:
         with torch.no_grad():
             for batch_data in tqdm(val_loader,desc=f"Validate..."):
                 ### get batch data
-                r_traj=batch_data.r
+                d_traj=batch_data.d
+                p_traj=batch_data.p
                 edge_index=batch_data.edge_index
                 edge_attr=batch_data.edge_attr
-                bfs_mask=batch_data.bfs_mask
-                r_traj=r_traj.to(device)
+                bf_mask=batch_data.bf_mask
+                d_traj=d_traj.to(device)
+                p_traj=p_traj.to(device)
                 edge_index=edge_index.to(device)
                 edge_attr=edge_attr.to(device)
-                bfs_mask=bfs_mask.to(device)
+                bf_mask=bf_mask.to(device)
 
                 ### Forward
-                pred_r_traj=model(
-                    r_traj=r_traj,
+                pred_result=model(
+                    d_traj=d_traj,
                     edge_index=edge_index,
-                    edge_attr=edge_attr
+                    edge_attr=edge_attr,
+                    mode="train"
                 )
+                pred_d_traj=pred_result["distance"] # [B,max_bf_len-1,N]
+                edge_score_traj=pred_result["edge_score"] # [E,max_bf_len-1,1]
 
                 ### Loss
-                loss=TrainUtils.compute_reachability_loss(
-                    r_traj=r_traj,
-                    pred_r_traj=pred_r_traj,
-                    bfs_mask=bfs_mask
+                distance_loss=TrainUtils.compute_distance_loss(
+                    d_traj=d_traj,
+                    pred_d_traj=pred_d_traj,
+                    bf_mask=bf_mask
                 )
+                predecessor_loss=TrainUtils.compute_predecessor_loss(
+                    p_traj=p_traj,
+                    edge_score_traj=edge_score_traj,
+                    edge_index=edge_index,
+                    bf_mask=bf_mask
+                )
+                loss=distance_loss+predecessor_loss
                 loss_list.append(loss)
 
                 ### Accuracy
-                acc=Metric.compute_reachability_accuracy(
-                    r_traj=r_traj,
-                    pred_r_traj=pred_r_traj,
-                    bfs_mask=bfs_mask
+                acc=Metric.compute_predecessor_accuracy(
+                    p_traj=p_traj,
+                    edge_score_traj=edge_score_traj,
+                    edge_index=edge_index,
+                    bf_mask=bf_mask
                 )
                 acc_list.append(acc)
         return {
             "loss":torch.stack(loss_list).mean().item(),
+            "acc":sum(acc_list)/len(acc_list)
+        }
+
+    @staticmethod
+    def evaluate(
+            model:nn.Module,
+            test_loader:DataLoader,
+            **kwargs
+        ):
+        """
+        Set GPU
+        """
+        if torch.cuda.is_available():
+            device=torch.device("cuda")
+        elif torch.backends.mps.is_available():
+            device=torch.device("mps")
+        else:
+            device=torch.device("cpu")
+        model=model.to(device)
+        model.eval()
+
+        """
+        Compute evaluate acc
+        """
+        acc_list=[]
+        with torch.no_grad():
+            for batch_data in tqdm(test_loader,desc=f"Validate..."):
+                ### get batch data
+                d_traj=batch_data.d
+                p_traj=batch_data.p
+                edge_index=batch_data.edge_index
+                edge_attr=batch_data.edge_attr
+                bf_mask=batch_data.bf_mask
+                d_traj=d_traj.to(device)
+                p_traj=p_traj.to(device)
+                edge_index=edge_index.to(device)
+                edge_attr=edge_attr.to(device)
+                bf_mask=bf_mask.to(device)
+
+                ### Forward
+                pred_result=model(
+                    d_traj=d_traj,
+                    edge_index=edge_index,
+                    edge_attr=edge_attr,
+                    mode="train"
+                )
+                edge_score_traj=pred_result["edge_score"] # [E,max_bf_len-1,1]
+
+                ### Accuracy
+                acc=Metric.compute_predecessor_accuracy(
+                    p_traj=p_traj,
+                    edge_score_traj=edge_score_traj,
+                    edge_index=edge_index,
+                    bf_mask=bf_mask
+                )
+                acc_list.append(acc)
+        return {
             "acc":sum(acc_list)/len(acc_list)
         }

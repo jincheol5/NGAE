@@ -16,7 +16,8 @@ class TrainUtils:
         - r: [B,max_bfs_len,N]
         - d: [B,max_bf_len,N]
         - p: [B,max_bf_len,N]
-            predecessor node id에 graph별 global node offset 적용
+            predecessor node id는 graph 내부 local id 유지
+            -> 이후 loss, acc 계산 시 graph 별로 계산하기 때문에 불필요
 
         Assumption:
             - batch 내 모든 graph의 num_nodes가 동일
@@ -24,7 +25,7 @@ class TrainUtils:
         Return:
             batch.r: [B,max_bfs_len,N]
             batch.d: [B,max_bf_len,N]
-            batch.p: [B,max_bf_len,N], global node indexing으로 변환됨
+            batch.p: [B,max_bf_len,N], local node id 유지
             batch.bfs_mask: [B,max_bfs_len]
             batch.bf_mask: [B,max_bf_len]
         """
@@ -49,7 +50,6 @@ class TrainUtils:
         bf_mask=torch.zeros((batch_size,max_bf_len),dtype=torch.bool)
 
         graph_list=[]
-        node_offset=0
         for idx,data in enumerate(data_list):
             bfs_len=data.r.size(0)
             bf_len=data.d.size(0)
@@ -63,9 +63,7 @@ class TrainUtils:
             bf_mask[idx,:bf_len]=True
 
             # Bellman-Ford predecessor trajectory
-            p=data.p.clone()
-            p+=node_offset
-            batch_p[idx,:bf_len]=p
+            batch_p[idx,:bf_len]=data.p
 
             # PyG가 r/d/p를 자동 concat하지 않도록 제거
             graph_data=data.clone()
@@ -73,9 +71,6 @@ class TrainUtils:
             del graph_data.d
             del graph_data.p
             graph_list.append(graph_data)
-
-            # update node_offset
-            node_offset+=data.num_nodes
 
         # PyG batching
         batch=Batch.from_data_list(graph_list)
@@ -175,6 +170,51 @@ class TrainUtils:
             label_d_traj[valid_mask]
         )
         return loss
+
+    @staticmethod
+    def compute_predecessor_loss(
+            p_traj: torch.Tensor,
+            edge_score_traj: torch.Tensor,
+            edge_index: torch.Tensor,
+            bf_mask: torch.Tensor
+        ):
+        """
+        유효 transition의 모든 node에 대한 pointer cross-entropy 평균.
+        CLRS POINTER loss 참고: https://github.com/google-deepmind/clrs/blob/master/clrs/_src/losses.py
+
+        p_traj: [B,max_bf_len,N], local predecessor node id
+        edge_score_traj: [E,max_bf_len-1,1], step별 다음 predecessor의 raw logits
+        edge_index: [2,E], source -> target, self-loop와 중복 엣지 없음
+        bf_mask: [B,max_bf_len], 실제 step은 True
+        후보는 incoming neighbor와 자기 자신이며, 자기 자신 점수는 0.
+        """
+        batch_size,n_step,n_node=p_traj.shape
+        valid_mask=bf_mask[:,:-1] & bf_mask[:,1:]
+        if not valid_mask.any():
+            return edge_score_traj.sum()*0.0
+
+        # 다음 step의 local predecessor 정답
+        labels=p_traj[:,1:].long()
+
+        # pointer classification용 logits 생성
+        # [graph, step, target, predecessor 후보] -> logits: [B, max_bf_len-1, N, N]
+        logits=edge_score_traj.new_full(
+            (batch_size,n_step-1,n_node,n_node),float('-inf')
+        )
+
+        # 자기 자신을 predecessor 후보로 추가
+        nodes=torch.arange(n_node,device=edge_score_traj.device)
+        logits[:,:,nodes,nodes]=0.0
+
+        # edge score를 pointer logits에 배치
+        src,tar=edge_index
+        logits[tar//n_node,:,tar%n_node,src%n_node]=edge_score_traj[:,:,0]
+
+        # graph/step mask로 padding을 제외하고 node별 CE 계산
+        return F.cross_entropy(
+            logits[valid_mask].reshape(-1,n_node),
+            labels[valid_mask].reshape(-1)
+        )+edge_score_traj.sum()*0.0
 
 class EarlyStopper:
     def __init__(self,

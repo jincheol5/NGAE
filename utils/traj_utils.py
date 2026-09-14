@@ -39,14 +39,14 @@ class TrajUtils:
         ### Init setting for BFS
         BFS_graph=copy.deepcopy(graph)
         GraphUtils.init_node_state(graph=BFS_graph,source=source)
-        BFS_Q=set().add(source)
+        BFS_Q={source}
         r_traj_list=[]
         r_traj_list.append(GraphUtils.get_node_state_tensor(graph=BFS_graph,state=f"r"))
 
         ### Init setting for Bellman-Ford
         BF_graph=copy.deepcopy(graph)
         GraphUtils.init_node_state(graph=BF_graph,source=source)
-        BF_Q=set().add(source)
+        BF_Q={source}
         d_traj_list=[]
         p_traj_list=[]
         d_traj_list.append(GraphUtils.get_node_state_tensor(graph=BF_graph,state=f"d"))

@@ -55,6 +55,11 @@ class GraphUtils:
     @staticmethod
     def get_edge_index_tensor(graph:nx.Graph):
         edge_list=list(graph.edges()) 
+        # 역방향 edge도 추가
+        edge_list+=[
+            (v,u) for u,v in graph.edges()
+            if u!=v
+        ]
         edge_index=torch.tensor(edge_list,dtype=torch.long).t().contiguous()
         sorted_edge_index=sort_edge_index(edge_index=edge_index,sort_by_row=False)
         return sorted_edge_index
@@ -69,7 +74,7 @@ class GraphUtils:
             for u,v in zip(edge_index[0],edge_index[1])
         ]
         edge_weight=torch.tensor(edge_weight)
-
+        return edge_weight.unsqueeze(-1)
 
 class GraphGenerator:
     @staticmethod
@@ -214,3 +219,4 @@ class GraphAlgorithm:
                     graph.nodes[tar]["d"]=graph.nodes[src]["d"]+graph.edges[(src,tar)]["w"]
                     graph.nodes[tar]["p"]=src
                     Q_next.add(tar)
+        return Q_next
